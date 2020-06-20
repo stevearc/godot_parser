@@ -1,0 +1,6 @@
+black
+docutils
+isort
+mypy
+nose
+pylint==2.3.1

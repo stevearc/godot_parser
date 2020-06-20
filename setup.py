@@ -1,0 +1,46 @@
+""" Setup file """
+import os
+import re
+
+from setuptools import find_packages, setup
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+README = open(os.path.join(HERE, "README.rst")).read()
+CHANGES = open(os.path.join(HERE, "CHANGES.rst")).read()
+REQUIREMENTS_TEST = open(os.path.join(HERE, "requirements_test.txt")).readlines()
+
+REQUIREMENTS = [
+    "pyparsing",
+]
+
+
+if __name__ == "__main__":
+    setup(
+        name="godot_parser",
+        version="0.1",
+        description="Python library for parsing Godot scene files",
+        long_description=README + "\n\n" + CHANGES,
+        classifiers=[
+            "Programming Language :: Python",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.5",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Development Status :: 3 - Alpha",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: MIT License",
+        ],
+        license="MIT",
+        author="Steven Arcangeli",
+        author_email="stevearc@stevearc.com",
+        url="https://github.com/stevearc/godot_parser",
+        keywords="godot parse parser scene",
+        platforms="any",
+        zip_safe=False,
+        include_package_data=True,
+        packages=find_packages(exclude=("tests",)),
+        install_requires=REQUIREMENTS,
+        tests_require=REQUIREMENTS + REQUIREMENTS_TEST,
+        test_suite="tests",
+    )

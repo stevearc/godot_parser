@@ -1,0 +1,2 @@
+include *.rst requirements_test.txt
+recursive-exclude tests *
