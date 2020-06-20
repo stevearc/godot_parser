@@ -1,5 +1,6 @@
 from io import BufferedReader
 
+from .files import *
 from .objects import *
 from .sections import *
 from .structure import scene_file

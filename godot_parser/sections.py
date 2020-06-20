@@ -1,26 +1,34 @@
 from collections import OrderedDict
+from functools import total_ordering
 from typing import Type, TypeVar
+
+from pyparsing import ParseBaseException
 
 from .util import stringify_object
 
-__all__ = ["GDSectionHeader", "GDSection", "GDFile", "GDScene", "GDResource"]
+__all__ = [
+    "GDSectionHeader",
+    "GDSection",
+    "GDExtResourceSection",
+    "GDSubResourceSection",
+]
+
+GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
+
 SCENE_ORDER = [
     "gd_scene",
+    "gd_resource",
     "ext_resource",
     "sub_resource",
+    "resource",
     "node",
     "connection",
     "editable",
 ]
 
-RESOURCE_ORDER = [
-    "gd_resource",
-    "ext_resource",
-    "sub_resource",
-    "resource",
-]
 
-GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
+class GodotParseException(ParseBaseException):
+    pass
 
 
 class GDSectionHeader(object):
@@ -29,6 +37,15 @@ class GDSectionHeader(object):
         self.attributes = OrderedDict()
         for k, v in kwargs.items():
             self.attributes[k] = v
+
+    def __getitem__(self, k: str):
+        return self.attributes[k]
+
+    def __setitem__(self, k: str, v):
+        self.attributes[k] = v
+
+    def __delitem__(self, k: str):
+        del self.attributes[k]
 
     @classmethod
     def from_parser(
@@ -62,6 +79,7 @@ class GDSectionHeader(object):
 GDSectionType = TypeVar("GDSectionType", bound="GDSection")
 
 
+@total_ordering
 class GDSection(object):
     def __init__(self, header: GDSectionHeader, **kwargs) -> None:
         self.header = header
@@ -69,11 +87,23 @@ class GDSection(object):
         for k, v in kwargs.items():
             self.keyvals[k] = v
 
+    def __getitem__(self, k: str):
+        return self.keyvals[k]
+
+    def __setitem__(self, k: str, v):
+        self.keyvals[k] = v
+
+    def __delitem__(self, k: str):
+        del self.keyvals[k]
+
     @classmethod
-    def from_parser(cls: Type[GDSectionType], parse_result) -> GDSectionType:
-        section = cls(parse_result[0])
+    def from_parser(cls: Type[GDSectionType], parse_result):
+        header = parse_result[0]
+        if header.name == "ext_resource":
+            return GDExtResourceSection.from_parser(parse_result)
+        section = cls(header)
         for k, v in parse_result[1:]:
-            section.keyvals[k] = v
+            section[k] = v
         return section
 
     def __str__(self) -> str:
@@ -85,7 +115,14 @@ class GDSection(object):
         return ret
 
     def __repr__(self) -> str:
-        return "GDSection(%s)" % self.__str__()
+        return "%s(%s)" % (type(self).__name__, self.__str__())
+
+    def __lt__(self, other: GDSectionType) -> bool:
+        i = SCENE_ORDER.index(self.header.name)
+        other_i = SCENE_ORDER.index(other.header.name)
+        if i != other_i:
+            return i < other_i
+        return id(self) < id(other)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDSection):
@@ -96,46 +133,66 @@ class GDSection(object):
         return not self.__eq__(other)
 
 
-GDFileType = TypeVar("GDFileType", bound="GDFile")
+class GDExtResourceSection(GDSection):
+    def __init__(self, path: str, type: str, id: int):
+        super().__init__(GDSectionHeader("ext_resource", path=path, type=type, id=id))
 
+    @property
+    def path(self) -> str:
+        return self.header.attributes["path"]
 
-class GDFile(object):
-    """ Base class representing the contents of a Godot file """
+    @path.setter
+    def path(self, path: str) -> None:
+        self.header.attributes["path"] = path
 
-    def __init__(self, *sections: GDSection) -> None:
-        self.sections = sections
+    @property
+    def type(self) -> str:
+        return self.header.attributes["type"]
+
+    @type.setter
+    def type(self, type: str) -> None:
+        self.header.attributes["type"] = type
+
+    @property
+    def id(self) -> int:
+        return self.header.attributes["id"]
+
+    @id.setter
+    def id(self, id: int) -> None:
+        self.header.attributes["id"] = id
 
     @classmethod
-    def from_parser(cls: Type[GDFileType], parse_result):
-        if not parse_result:
-            return cls()
-        first_section = parse_result[0]
-        if first_section.header.name == "gd_scene":
-            return GDScene(*parse_result)
-        elif first_section.header.name == "gd_scene":
-            return GDResource(*parse_result)
-        return cls(*parse_result)
-
-    def __str__(self) -> str:
-        return "\n\n".join([str(s) for s in self.sections])
-
-    def __repr__(self) -> str:
-        return "GDFile(%s)" % self.__str__()
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, GDFile):
-            return False
-        return self.sections == other.sections
-
-    def __ne__(self, other) -> bool:
-        return not self.__eq__(other)
+    def from_parser(cls: Type[GDSectionType], parse_result):
+        if len(parse_result) > 1:
+            raise GodotParseException("ext_resource cannot have properties")
+        header = parse_result[0]
+        return cls(**header.attributes)
 
 
-class GDScene(GDFile):
-    def __repr__(self) -> str:
-        return "GDScene(%s)" % self.__str__()
+class GDSubResourceSection(GDSection):
+    def __init__(self, type: str, id: int, **kwargs):
+        super().__init__(GDSectionHeader("sub_resource", type=type, id=id), **kwargs)
 
+    @property
+    def type(self) -> str:
+        return self.header.attributes["type"]
 
-class GDResource(GDFile):
-    def __repr__(self) -> str:
-        return "GDResource(%s)" % self.__str__()
+    @type.setter
+    def type(self, type: str) -> None:
+        self.header.attributes["type"] = type
+
+    @property
+    def id(self) -> int:
+        return self.header.attributes["id"]
+
+    @id.setter
+    def id(self, id: int) -> None:
+        self.header.attributes["id"] = id
+
+    @classmethod
+    def from_parser(cls: Type[GDSectionType], parse_result):
+        header = parse_result[0]
+        section = cls(**header.attributes)
+        for k, v in parse_result[1:]:
+            section[k] = v
+        return section

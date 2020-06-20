@@ -3,7 +3,15 @@ from typing import Type, TypeVar
 
 from .util import stringify_object
 
-__all__ = ["GDObject", "Vector2", "Vector3", "NodePath"]
+__all__ = [
+    "GDObject",
+    "Vector2",
+    "Vector3",
+    "NodePath",
+    "ExtResource",
+    "SubResource",
+    "Color",
+]
 
 GD_OBJECT_REGISTRY = {}
 
@@ -37,6 +45,9 @@ class GDObject(metaclass=GDObjectMeta):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def __hash__(self) -> int:
+        return hash(self.name) + hash(self.args)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDObject):
@@ -119,6 +130,57 @@ class Vector3(GDObject):
         self.args[2] = z
 
 
+class Color(GDObject):
+    def __init__(self, r: float, g: float, b: float, a: float) -> None:
+        super().__init__("Color", r, g, b, a)
+
+    def __getitem__(self, idx: int) -> float:
+        return self.args[0]
+
+    def __setitem__(self, idx: int, value: float) -> None:
+        self.args[idx] = value
+
+    @property
+    def r(self) -> float:
+        """ Getter for r """
+        return self.args[0]
+
+    @r.setter
+    def r(self, r: float) -> None:
+        """ Setter for r """
+        self.args[0] = r
+
+    @property
+    def g(self) -> float:
+        """ Getter for g """
+        return self.args[1]
+
+    @g.setter
+    def g(self, g: float) -> None:
+        """ Setter for g """
+        self.args[1] = g
+
+    @property
+    def b(self) -> float:
+        """ Getter for b """
+        return self.args[2]
+
+    @b.setter
+    def b(self, b: float) -> None:
+        """ Setter for b """
+        self.args[2] = b
+
+    @property
+    def a(self) -> float:
+        """ Getter for a """
+        return self.args[3]
+
+    @a.setter
+    def a(self, a: float) -> None:
+        """ Setter for a """
+        self.args[3] = a
+
+
 class NodePath(GDObject):
     def __init__(self, path: str) -> None:
         super().__init__("NodePath", path)
@@ -135,3 +197,33 @@ class NodePath(GDObject):
 
     def __str__(self) -> str:
         return '%s("%s")' % (self.name, self.path)
+
+
+class ExtResource(GDObject):
+    def __init__(self, id_: int) -> None:
+        super().__init__("ExtResource", id_)
+
+    @property
+    def id(self) -> int:
+        """ Getter for id """
+        return self.args[0]
+
+    @id.setter
+    def id(self, id_: int) -> None:
+        """ Setter for id """
+        self.args[0] = id_
+
+
+class SubResource(GDObject):
+    def __init__(self, id_: int) -> None:
+        super().__init__("SubResource", id_)
+
+    @property
+    def id(self) -> int:
+        """ Getter for id """
+        return self.args[0]
+
+    @id.setter
+    def id(self, id_: int) -> None:
+        """ Setter for id """
+        self.args[0] = id_

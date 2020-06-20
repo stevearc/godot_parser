@@ -3,22 +3,14 @@ import unittest
 
 from pyparsing import ParseException
 
-from godot_parser import (
-    GDFile,
-    GDObject,
-    GDScene,
-    GDSection,
-    GDSectionHeader,
-    Vector2,
-    parse,
-)
+from godot_parser import GDFile, GDObject, GDSection, GDSectionHeader, Vector2, parse
 
 HERE = os.path.dirname(__file__)
 
 TEST_CASES = [
     (
         "[gd_scene load_steps=5 format=2]",
-        GDScene(GDSection(GDSectionHeader("gd_scene", load_steps=5, format=2))),
+        GDFile(GDSection(GDSectionHeader("gd_scene", load_steps=5, format=2))),
     ),
     (
         '[ext_resource path="res://Sample.tscn" type="PackedScene" id=1]',
@@ -33,7 +25,7 @@ TEST_CASES = [
     (
         """[gd_scene load_steps=5 format=2]
 [ext_resource path="res://Sample.tscn" type="PackedScene" id=1]""",
-        GDScene(
+        GDFile(
             GDSection(GDSectionHeader("gd_scene", load_steps=5, format=2)),
             GDSection(
                 GDSectionHeader(
