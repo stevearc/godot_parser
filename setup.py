@@ -9,9 +9,7 @@ README = open(os.path.join(HERE, "README.rst")).read()
 CHANGES = open(os.path.join(HERE, "CHANGES.rst")).read()
 REQUIREMENTS_TEST = open(os.path.join(HERE, "requirements_test.txt")).readlines()
 
-REQUIREMENTS = [
-    "pyparsing",
-]
+REQUIREMENTS = ["pyparsing"]
 
 
 if __name__ == "__main__":
@@ -20,6 +18,7 @@ if __name__ == "__main__":
         version="0.1",
         description="Python library for parsing Godot scene files",
         long_description=README + "\n\n" + CHANGES,
+        long_description_content_type="text/x-rst",
         classifiers=[
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
