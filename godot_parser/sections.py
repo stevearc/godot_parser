@@ -1,9 +1,10 @@
+import re
 from collections import OrderedDict
-from functools import total_ordering
-from typing import Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 from pyparsing import ParseBaseException
 
+from .objects import ExtResource
 from .util import stringify_object
 
 __all__ = [
@@ -15,16 +16,7 @@ __all__ = [
 
 GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
 
-SCENE_ORDER = [
-    "gd_scene",
-    "gd_resource",
-    "ext_resource",
-    "sub_resource",
-    "resource",
-    "node",
-    "connection",
-    "editable",
-]
+GD_SECTION_REGISTRY = {}
 
 
 class GodotParseException(ParseBaseException):
@@ -45,7 +37,13 @@ class GDSectionHeader(object):
         self.attributes[k] = v
 
     def __delitem__(self, k: str):
-        del self.attributes[k]
+        try:
+            del self.attributes[k]
+        except KeyError:
+            pass
+
+    def get(self, k: str, default=None):
+        return self.attributes.get(k, default)
 
     @classmethod
     def from_parser(
@@ -76,11 +74,19 @@ class GDSectionHeader(object):
         return not self.__eq__(other)
 
 
+class GDSectionMeta(type):
+    def __new__(cls, name, bases, dct):
+        x = super().__new__(cls, name, bases, dct)
+        section_name_camel = name[2:-7]
+        section_name = re.sub(r"(?<!^)(?=[A-Z])", "_", section_name_camel).lower()
+        GD_SECTION_REGISTRY[section_name] = x
+        return x
+
+
 GDSectionType = TypeVar("GDSectionType", bound="GDSection")
 
 
-@total_ordering
-class GDSection(object):
+class GDSection(metaclass=GDSectionMeta):
     def __init__(self, header: GDSectionHeader, **kwargs) -> None:
         self.header = header
         self.keyvals = OrderedDict()
@@ -99,9 +105,10 @@ class GDSection(object):
     @classmethod
     def from_parser(cls: Type[GDSectionType], parse_result):
         header = parse_result[0]
-        if header.name == "ext_resource":
-            return GDExtResourceSection.from_parser(parse_result)
-        section = cls(header)
+        factory = GD_SECTION_REGISTRY.get(header.name, cls)
+        section = factory.__new__(factory)
+        section.header = header
+        section.keyvals = OrderedDict()
         for k, v in parse_result[1:]:
             section[k] = v
         return section
@@ -117,17 +124,10 @@ class GDSection(object):
     def __repr__(self) -> str:
         return "%s(%s)" % (type(self).__name__, self.__str__())
 
-    def __lt__(self, other: GDSectionType) -> bool:
-        i = SCENE_ORDER.index(self.header.name)
-        other_i = SCENE_ORDER.index(other.header.name)
-        if i != other_i:
-            return i < other_i
-        return id(self) < id(other)
-
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDSection):
             return False
-        return self.header == other.header and self.keyvals == other.keyvals
+        return self.header.name == other.header.name and self.keyvals == other.keyvals
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
@@ -139,34 +139,27 @@ class GDExtResourceSection(GDSection):
 
     @property
     def path(self) -> str:
-        return self.header.attributes["path"]
+        return self.header["path"]
 
     @path.setter
     def path(self, path: str) -> None:
-        self.header.attributes["path"] = path
+        self.header["path"] = path
 
     @property
     def type(self) -> str:
-        return self.header.attributes["type"]
+        return self.header["type"]
 
     @type.setter
     def type(self, type: str) -> None:
-        self.header.attributes["type"] = type
+        self.header["type"] = type
 
     @property
     def id(self) -> int:
-        return self.header.attributes["id"]
+        return self.header["id"]
 
     @id.setter
     def id(self, id: int) -> None:
-        self.header.attributes["id"] = id
-
-    @classmethod
-    def from_parser(cls: Type[GDSectionType], parse_result):
-        if len(parse_result) > 1:
-            raise GodotParseException("ext_resource cannot have properties")
-        header = parse_result[0]
-        return cls(**header.attributes)
+        self.header["id"] = id
 
 
 class GDSubResourceSection(GDSection):
@@ -175,24 +168,104 @@ class GDSubResourceSection(GDSection):
 
     @property
     def type(self) -> str:
-        return self.header.attributes["type"]
+        return self.header["type"]
 
     @type.setter
     def type(self, type: str) -> None:
-        self.header.attributes["type"] = type
+        self.header["type"] = type
 
     @property
     def id(self) -> int:
-        return self.header.attributes["id"]
+        return self.header["id"]
 
     @id.setter
     def id(self, id: int) -> None:
-        self.header.attributes["id"] = id
+        self.header["id"] = id
+
+
+class GDNodeSection(GDSection):
+    def __init__(
+        self,
+        name: str,
+        type: str = None,
+        parent: str = None,
+        instance: int = None,
+        index: int = None,
+        # TODO: instance_placeholder, owner, groups
+    ):
+        kwargs = {
+            "name": name,
+            "type": type,
+            "parent": parent,
+            "instance": ExtResource(instance) if instance is not None else None,
+            "index": str(index) if index is not None else None,
+        }
+        super().__init__(
+            GDSectionHeader(
+                "node", **{k: v for k, v in kwargs.items() if v is not None}
+            )
+        )
 
     @classmethod
-    def from_parser(cls: Type[GDSectionType], parse_result):
-        header = parse_result[0]
-        section = cls(**header.attributes)
-        for k, v in parse_result[1:]:
-            section[k] = v
-        return section
+    def ext_node(cls, name: str, instance: int, parent: str = None, index: int = None):
+        return cls(name, parent=parent, instance=instance, index=index)
+
+    @property
+    def name(self) -> str:
+        return self.header["name"]
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self.header["name"] = name
+
+    @property
+    def type(self) -> Optional[str]:
+        return self.header.get("type")
+
+    @type.setter
+    def type(self, type: Optional[str]) -> None:
+        if type is None:
+            del self.header["type"]
+        else:
+            self.header["type"] = type
+            self.instance = None
+
+    @property
+    def parent(self) -> Optional[str]:
+        return self.header.get("parent")
+
+    @parent.setter
+    def parent(self, parent: Optional[str]) -> None:
+        if parent is None:
+            del self.header["parent"]
+        else:
+            self.header["parent"] = parent
+
+    @property
+    def instance(self) -> Optional[int]:
+        resource = self.header.get("instance")
+        if resource is not None:
+            return resource.id
+        return None
+
+    @instance.setter
+    def instance(self, instance: Optional[int]) -> None:
+        if instance is None:
+            del self.header["instance"]
+        else:
+            self.header["instance"] = ExtResource(instance)
+            self.type = None
+
+    @property
+    def index(self) -> Optional[int]:
+        idx = self.header.get("index")
+        if idx is not None:
+            return int(idx)
+        return None
+
+    @index.setter
+    def index(self, index: Optional[int]) -> None:
+        if index is None:
+            del self.header["index"]
+        else:
+            self.header["index"] = str(index)

@@ -132,6 +132,10 @@ class Vector3(GDObject):
 
 class Color(GDObject):
     def __init__(self, r: float, g: float, b: float, a: float) -> None:
+        assert 0 <= r <= 1
+        assert 0 <= g <= 1
+        assert 0 <= b <= 1
+        assert 0 <= a <= 1
         super().__init__("Color", r, g, b, a)
 
     def __getitem__(self, idx: int) -> float:
@@ -200,8 +204,8 @@ class NodePath(GDObject):
 
 
 class ExtResource(GDObject):
-    def __init__(self, id_: int) -> None:
-        super().__init__("ExtResource", id_)
+    def __init__(self, id: int) -> None:
+        super().__init__("ExtResource", id)
 
     @property
     def id(self) -> int:
@@ -209,14 +213,14 @@ class ExtResource(GDObject):
         return self.args[0]
 
     @id.setter
-    def id(self, id_: int) -> None:
+    def id(self, id: int) -> None:
         """ Setter for id """
-        self.args[0] = id_
+        self.args[0] = id
 
 
 class SubResource(GDObject):
-    def __init__(self, id_: int) -> None:
-        super().__init__("SubResource", id_)
+    def __init__(self, id: int) -> None:
+        super().__init__("SubResource", id)
 
     @property
     def id(self) -> int:
@@ -224,6 +228,6 @@ class SubResource(GDObject):
         return self.args[0]
 
     @id.setter
-    def id(self, id_: int) -> None:
+    def id(self, id: int) -> None:
         """ Setter for id """
-        self.args[0] = id_
+        self.args[0] = id
