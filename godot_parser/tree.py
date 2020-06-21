@@ -30,7 +30,7 @@ class Node(object):
             section.type,
             section.instance,
             section,
-            properties=section.keyvals,
+            properties=section.properties,
         )
 
     def visit(self, path: str = None):
@@ -51,7 +51,7 @@ class Node(object):
         self.section.type = self.type
         self.section.parent = path
         self.section.instance = self.instance
-        self.section.keyvals = self.properties
+        self.section.properties = self.properties
         return self.section
 
     def get_children(self):

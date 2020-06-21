@@ -13,6 +13,10 @@ TEST_CASES = [
         GDFile(GDSection(GDSectionHeader("gd_scene", load_steps=5, format=2))),
     ),
     (
+        "[gd_resource load_steps=5 format=2]",
+        GDFile(GDSection(GDSectionHeader("gd_resource", load_steps=5, format=2))),
+    ),
+    (
         '[ext_resource path="res://Sample.tscn" type="PackedScene" id=1]',
         GDFile(
             GDSection(

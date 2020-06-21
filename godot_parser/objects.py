@@ -46,9 +46,6 @@ class GDObject(metaclass=GDObjectMeta):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __hash__(self) -> int:
-        return hash(self.name) + hash(self.args)
-
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDObject):
             return False
@@ -63,7 +60,7 @@ class Vector2(GDObject):
         super().__init__("Vector2", x, y)
 
     def __getitem__(self, idx) -> float:
-        return self.args[0]
+        return self.args[idx]
 
     def __setitem__(self, idx: int, value: float):
         self.args[idx] = value
@@ -94,7 +91,7 @@ class Vector3(GDObject):
         super().__init__("Vector3", x, y, z)
 
     def __getitem__(self, idx: int) -> float:
-        return self.args[0]
+        return self.args[idx]
 
     def __setitem__(self, idx: int, value: float) -> None:
         self.args[idx] = value
@@ -139,7 +136,7 @@ class Color(GDObject):
         super().__init__("Color", r, g, b, a)
 
     def __getitem__(self, idx: int) -> float:
-        return self.args[0]
+        return self.args[idx]
 
     def __setitem__(self, idx: int, value: float) -> None:
         self.args[idx] = value

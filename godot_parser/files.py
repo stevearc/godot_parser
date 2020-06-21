@@ -9,6 +9,7 @@ from .sections import (
     GDSectionHeader,
     GDSubResourceSection,
 )
+from .objects import ExtResource, SubResource, GDObject
 from .structure import scene_file
 from .tree import Tree
 
@@ -31,8 +32,6 @@ GDFileType = TypeVar("GDFileType", bound="GDFile")
 
 class GDFile(object):
     """ Base class representing the contents of a Godot file """
-
-    EXT = ".tscn"
 
     def __init__(self, *sections: GDSection) -> None:
         self._sections = list(sections)
@@ -59,7 +58,7 @@ class GDFile(object):
         return True
 
     def remove_at(self, index: int):
-        section = self._sections.pop(index)
+        return self._sections.pop(index)
 
     def get_sections(self, name: str = None) -> List[GDSection]:
         if name is None:
@@ -140,14 +139,12 @@ class GDFile(object):
 
     @classmethod
     def from_parser(cls: Type[GDFileType], parse_result):
-        if not parse_result:
-            return cls()
         first_section = parse_result[0]
         if first_section.header.name == "gd_scene":
             scene = GDScene.__new__(GDScene)
             scene._sections = list(parse_result)
             return scene
-        elif first_section.header.name == "gd_scene":
+        elif first_section.header.name == "gd_resource":
             resource = GDResource.__new__(GDResource)
             resource._sections = list(parse_result)
             return resource
@@ -156,8 +153,6 @@ class GDFile(object):
     def write(self, filename):
         """ Writes this to a file """
         ext = os.path.splitext(filename)[1]
-        if not ext:
-            filename += self.EXT
         with open(filename, "w") as ofile:
             ofile.write(str(self))
 
@@ -207,6 +202,31 @@ class GDCommonFile(GDFile):
         section = self._sections.pop(index)
         if section.header.name in ["ext_resource", "sub_resource"]:
             self.load_steps -= 1
+            self._recalculate_resource_ids(section.header.name)
+
+    def _recalculate_resource_ids(self, section_name):
+        id_map = {}
+        for i, section in enumerate(self.get_sections(section_name)):
+            id_map[section.id] = i + 1
+            section.id = i + 1
+        class_type = ExtResource if section_name == "ext_resource" else SubResource
+
+        def replace(value):
+            if isinstance(value, class_type):
+                value.id = id_map[value.id]
+            elif isinstance(value, list):
+                for v in value:
+                    replace(v)
+            elif isinstance(value, dict):
+                for v in value.values():
+                    replace(v)
+            elif isinstance(value, GDObject):
+                for v in value.args:
+                    replace(v)
+
+        for node in self.get_sections("node"):
+            replace(node.header.attributes)
+            replace(node.properties)
 
 
 class GDScene(GDCommonFile):
@@ -215,7 +235,5 @@ class GDScene(GDCommonFile):
 
 
 class GDResource(GDCommonFile):
-    EXT = ".tres"
-
     def __init__(self, *sections: GDSection) -> None:
         super().__init__("gd_resource", *sections)

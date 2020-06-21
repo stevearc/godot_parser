@@ -10,6 +10,7 @@ from .util import stringify_object
 __all__ = [
     "GDSectionHeader",
     "GDSection",
+    "GDNodeSection",
     "GDExtResourceSection",
     "GDSubResourceSection",
 ]
@@ -89,18 +90,24 @@ GDSectionType = TypeVar("GDSectionType", bound="GDSection")
 class GDSection(metaclass=GDSectionMeta):
     def __init__(self, header: GDSectionHeader, **kwargs) -> None:
         self.header = header
-        self.keyvals = OrderedDict()
+        self.properties = OrderedDict()
         for k, v in kwargs.items():
-            self.keyvals[k] = v
+            self.properties[k] = v
 
     def __getitem__(self, k: str):
-        return self.keyvals[k]
+        return self.properties[k]
 
     def __setitem__(self, k: str, v):
-        self.keyvals[k] = v
+        self.properties[k] = v
 
     def __delitem__(self, k: str):
-        del self.keyvals[k]
+        try:
+            del self.properties[k]
+        except KeyError:
+            pass
+
+    def get(self, k: str, default=None):
+        return self.properties.get(k, default)
 
     @classmethod
     def from_parser(cls: Type[GDSectionType], parse_result):
@@ -108,16 +115,19 @@ class GDSection(metaclass=GDSectionMeta):
         factory = GD_SECTION_REGISTRY.get(header.name, cls)
         section = factory.__new__(factory)
         section.header = header
-        section.keyvals = OrderedDict()
+        section.properties = OrderedDict()
         for k, v in parse_result[1:]:
             section[k] = v
         return section
 
     def __str__(self) -> str:
         ret = str(self.header)
-        if self.keyvals:
+        if self.properties:
             ret += "\n" + "\n".join(
-                ["%s = %s" % (k, stringify_object(v)) for k, v in self.keyvals.items()]
+                [
+                    "%s = %s" % (k, stringify_object(v))
+                    for k, v in self.properties.items()
+                ]
             )
         return ret
 
@@ -127,7 +137,10 @@ class GDSection(metaclass=GDSectionMeta):
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDSection):
             return False
-        return self.header.name == other.header.name and self.keyvals == other.keyvals
+        return (
+            self.header.name == other.header.name
+            and self.properties == other.properties
+        )
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
