@@ -32,7 +32,7 @@ def _parse_and_test_file(filename: str) -> bool:
             for orig, parsed in zip_longest(
                 content_lines, data_lines, fillvalue="----EMPTY----"
             ):
-                c = "    " if orig == parsed else "  X)"
+                c = "    " if orig == parsed else "XXX)"
                 print("%s\n%s%s" % (orig, c, parsed))
         return False
     return True

@@ -79,8 +79,8 @@ Find all scenes in your project with a "Sensor" node and change the
   import sys
   from godot_parser import load
 
-  def main():
-      for root, _dirs, files in os.walk(sys.argv[1]):
+  def main(project):
+      for root, _dirs, files in os.walk(project):
           for file in files:
               if os.path.splitext(file)[1] == '.tscn':
                   update_collision_layer(os.path.join(root, file))
@@ -97,6 +97,8 @@ Find all scenes in your project with a "Sensor" node and change the
 
       if updated:
           scene.write(filepath)
+
+  main(sys.argv[1])
 
 Caveats
 -------

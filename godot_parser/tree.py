@@ -74,14 +74,16 @@ class Node(object):
     def add_child(self, node):
         self._children.append(node)
 
-    def remove_child(self, node_or_name):
-        if isinstance(node_or_name, str):
+    def remove_child(self, node_or_name_or_index):
+        if isinstance(node_or_name_or_index, str):
             for i, node in enumerate(self._children):
-                if node.name == node_or_name:
+                if node.name == node_or_name_or_index:
                     self._children.pop(i)
                     return
+        elif isinstance(node_or_name_or_index, int):
+            self._children.pop(node_or_name_or_index)
         else:
-            self._children.remove(node_or_name)
+            self._children.remove(node_or_name_or_index)
 
     def __str__(self):
         return "Node(%s)" % self.name

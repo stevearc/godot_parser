@@ -9,6 +9,7 @@ from .sections import (
     GDSectionHeader,
     GDSubResourceSection,
 )
+from .structure import scene_file
 from .tree import Tree
 
 __all__ = ["GDFile", "GDScene", "GDResource"]
@@ -65,8 +66,8 @@ class GDFile(object):
             return self._sections
         return [s for s in self._sections if s.header.name == name]
 
-    def find_section(self, name: str = None, **constraints):
-        for section in self.get_sections(name):
+    def find_section(self, section_name_: str = None, **constraints):
+        for section in self.get_sections(section_name_):
             found = True
             for k, v in constraints.items():
                 if getattr(section, k, None) == v:
@@ -119,8 +120,10 @@ class GDFile(object):
             if section.header.name == "node":
                 self._sections.pop(i)
         nodes = tree.flatten()
-        # add_section messes with ordering. Let's find out where the root node belongs
-        # and then bulk add the rest at that index
+        if not nodes:
+            return
+        # Let's find out where the root node belongs and then bulk add the rest at that
+        # index
         i = self.add_section(nodes[0])
         self._sections[i + 1 : i + 1] = nodes[1:]
 
@@ -128,7 +131,12 @@ class GDFile(object):
         with self.use_tree() as tree:
             if tree.root is None:
                 return None
-            return tree.root.get_node(path)
+            node = tree.root.get_node(path)
+        return node.section if node is not None else None
+
+    @classmethod
+    def parse(cls: Type[GDFileType], contents: str):
+        return cls.from_parser(scene_file.parseString(contents, parseAll=True))
 
     @classmethod
     def from_parser(cls: Type[GDFileType], parse_result):

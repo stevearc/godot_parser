@@ -1,9 +1,6 @@
-import os
 import unittest
 
 from godot_parser import GDScene, Node
-
-HERE = os.path.dirname(__file__)
 
 
 class TestCreator(unittest.TestCase):
