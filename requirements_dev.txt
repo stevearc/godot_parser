@@ -3,3 +3,5 @@ wheel
 tox
 python-language-server
 pyls-mypy
+twine
+bumpversion
