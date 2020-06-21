@@ -92,7 +92,7 @@ Find all scenes in your project with a "Sensor" node and change the
       with scene.use_tree() as tree:
           sensor = tree.root.get_node('Sensor')
           if sensor is not None:
-              sensor.properties['collision_layer'] = 5
+              sensor['collision_layer'] = 5
               updated = True
 
       if updated:
@@ -113,7 +113,3 @@ If you want to run a quick sanity check for this tool, you can use the
 ``test_parse_files.py`` script. Pass in your root Godot directory and it will
 verify that it can correctly parse and re-serialize all scene and resource files
 in your project.
-
-TODO
-----
-* Add lots of docstrings

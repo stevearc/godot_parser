@@ -1,6 +1,6 @@
 import unittest
 
-from godot_parser import Vector2, Vector3, Color, NodePath, ExtResource, SubResource
+from godot_parser import Color, ExtResource, NodePath, SubResource, Vector2, Vector3
 
 
 class TestGDObjects(unittest.TestCase):

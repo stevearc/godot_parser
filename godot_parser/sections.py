@@ -2,8 +2,6 @@ import re
 from collections import OrderedDict
 from typing import Optional, Type, TypeVar
 
-from pyparsing import ParseBaseException
-
 from .objects import ExtResource
 from .util import stringify_object
 
@@ -13,6 +11,7 @@ __all__ = [
     "GDNodeSection",
     "GDExtResourceSection",
     "GDSubResourceSection",
+    "GDResourceSection",
 ]
 
 GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
@@ -20,11 +19,15 @@ GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
 GD_SECTION_REGISTRY = {}
 
 
-class GodotParseException(ParseBaseException):
-    pass
-
-
 class GDSectionHeader(object):
+    """
+    Represents the header for a section
+
+    example::
+
+        [node name="Sprite" type="Sprite" index="3"]
+    """
+
     def __init__(self, _name: str, **kwargs) -> None:
         self.name = _name
         self.attributes = OrderedDict()
@@ -76,6 +79,8 @@ class GDSectionHeader(object):
 
 
 class GDSectionMeta(type):
+    """ Still trying to be too clever """
+
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
         section_name_camel = name[2:-7]
@@ -88,6 +93,16 @@ GDSectionType = TypeVar("GDSectionType", bound="GDSection")
 
 
 class GDSection(metaclass=GDSectionMeta):
+    """
+    Represents a full section of a GD file
+
+    example::
+
+        [node name="Sprite" type="Sprite"]
+        texture = ExtResource( 1 )
+
+    """
+
     def __init__(self, header: GDSectionHeader, **kwargs) -> None:
         self.header = header
         self.properties = OrderedDict()
@@ -147,6 +162,8 @@ class GDSection(metaclass=GDSectionMeta):
 
 
 class GDExtResourceSection(GDSection):
+    """ Section representing an [ext_resource] """
+
     def __init__(self, path: str, type: str, id: int):
         super().__init__(GDSectionHeader("ext_resource", path=path, type=type, id=id))
 
@@ -176,6 +193,8 @@ class GDExtResourceSection(GDSection):
 
 
 class GDSubResourceSection(GDSection):
+    """ Section representing a [sub_resource] """
+
     def __init__(self, type: str, id: int, **kwargs):
         super().__init__(GDSectionHeader("sub_resource", type=type, id=id), **kwargs)
 
@@ -197,6 +216,8 @@ class GDSubResourceSection(GDSection):
 
 
 class GDNodeSection(GDSection):
+    """ Section representing a [node] """
+
     def __init__(
         self,
         name: str,
@@ -204,7 +225,8 @@ class GDNodeSection(GDSection):
         parent: str = None,
         instance: int = None,
         index: int = None,
-        # TODO: instance_placeholder, owner, groups
+        # TODO: instance_placeholder, owner, groups are referenced in the docs, but I
+        # haven't seen them come up yet in my project
     ):
         kwargs = {
             "name": name,
@@ -282,3 +304,10 @@ class GDNodeSection(GDSection):
             del self.header["index"]
         else:
             self.header["index"] = str(index)
+
+
+class GDResourceSection(GDSection):
+    """ Represents a [resource] section """
+
+    def __init__(self, **kwargs):
+        super().__init__(GDSectionHeader("resource"), **kwargs)

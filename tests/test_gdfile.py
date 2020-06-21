@@ -1,7 +1,15 @@
-import unittest
 import tempfile
+import unittest
 
-from godot_parser import GDScene, Node, ExtResource, GDObject
+from godot_parser import (
+    ExtResource,
+    GDObject,
+    GDResource,
+    GDResourceSection,
+    GDScene,
+    Node,
+    SubResource,
+)
 
 
 class TestGDFile(unittest.TestCase):
@@ -154,3 +162,20 @@ visible = false
         self.assertEqual(node["textures"][0].id, 1)
         self.assertEqual(node["texture_map"]["tex"].id, 1)
         self.assertEqual(node["texture_pool"].args[0].id, 1)
+
+    def test_addremove_sub_res(self):
+        """ Test adding and removing a sub_resource """
+        scene = GDResource()
+        res_id = scene.add_sub_resource("CircleShape2D")
+        self.assertEqual(res_id, 1)
+        res2_id = scene.add_sub_resource("AnimationNodeAnimation")
+        self.assertEqual(res2_id, 2)
+        resource = GDResourceSection(shape=SubResource(res2_id))
+        scene.add_section(resource)
+
+        s = scene.find_section(type="CircleShape2D")
+        scene.remove_section(s)
+
+        s = scene.find_section("sub_resource")
+        self.assertEqual(s.id, 1)
+        self.assertEqual(resource["shape"].id, 1)

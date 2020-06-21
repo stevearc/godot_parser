@@ -1,25 +1,27 @@
+""" Wrappers for Godot's non-primitive object types """
+
 from functools import partial
 from typing import Type, TypeVar
 
 from .util import stringify_object
 
-__all__ = [
-    "GDObject",
-    "Vector2",
-    "Vector3",
-    "NodePath",
-    "ExtResource",
-    "SubResource",
-    "Color",
-]
+__all__ = []
 
 GD_OBJECT_REGISTRY = {}
 
 
 class GDObjectMeta(type):
+    """
+    This is me trying to be too clever for my own good
+
+    Odds are high that it'll cause some weird hard-to-debug issues at some point, but
+    isn't it neeeeeat? -_-
+    """
+
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
         GD_OBJECT_REGISTRY[name] = x
+        __all__.append(name)
         return x
 
 
@@ -27,6 +29,14 @@ GDObjectType = TypeVar("GDObjectType", bound="GDObject")
 
 
 class GDObject(metaclass=GDObjectMeta):
+    """
+    Base class for all GD Object types
+
+    Can be used to represent any GD type. For example::
+
+        GDObject('Vector2', 1, 2) == Vector2(1, 2)
+    """
+
     def __init__(self, name, *args) -> None:
         self.name = name
         self.args = list(args)

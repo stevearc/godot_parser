@@ -1,3 +1,5 @@
+""" The grammar of low-level values in the GD file format """
+
 from pyparsing import (
     Forward,
     Group,
@@ -30,6 +32,8 @@ primitive = (
     | pyparsing_common.number
 )
 value = Forward()
+
+# Vector2( 1, 2 )
 obj_type = (
     Word(alphas, alphanums).setResultsName("object_name")
     + Suppress("(")
@@ -37,6 +41,7 @@ obj_type = (
     + Suppress(")")
 ).setParseAction(GDObject.from_parser)
 
+# [ 1, 2 ]
 list_ = (
     Group(Suppress("[") + Optional(delimitedList(value)) + Suppress("]"))
     .setName("list")
@@ -44,6 +49,9 @@ list_ = (
 )
 key_val = Group(QuotedString('"', escChar="\\") + Suppress(":") + value)
 
+# {
+# "_edit_use_anchors_": false
+# }
 dict_ = (
     (Suppress("{") + Optional(delimitedList(key_val)) + Suppress("}"))
     .setName("dict")

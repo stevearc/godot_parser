@@ -1,10 +1,10 @@
 import unittest
 
 from godot_parser import (
+    GDExtResourceSection,
+    GDNodeSection,
     GDSection,
     GDSectionHeader,
-    GDNodeSection,
-    GDExtResourceSection,
     GDSubResourceSection,
 )
 
