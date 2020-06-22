@@ -1,4 +1,3 @@
-import os
 from contextlib import contextmanager
 from typing import List, Optional, Type, TypeVar
 
@@ -11,7 +10,7 @@ from .sections import (
     GDSubResourceSection,
 )
 from .structure import scene_file
-from .tree import Tree
+from .util import find_project_root
 
 __all__ = ["GDFile", "GDScene", "GDResource"]
 
@@ -37,6 +36,7 @@ class GDFile(object):
 
     def __init__(self, *sections: GDSection) -> None:
         self._sections = list(sections)
+        self.project_root = None
 
     def add_section(self, new_section: GDSection) -> int:
         """ Add a section to the file and return the index of that section """
@@ -103,23 +103,25 @@ class GDFile(object):
             if found:
                 yield section
 
-    def add_ext_resource(self, path: str, type: str) -> int:
+    def add_ext_resource(self, path: str, type: str) -> GDExtResourceSection:
         """ Add an ext_resource """
         next_id = 1 + max(
             [s.id for s in self.get_sections("ext_resource")]  # type: ignore
             + [0]
         )
-        self.add_section(GDExtResourceSection(path, type, next_id))
-        return next_id
+        section = GDExtResourceSection(path, type, next_id)
+        self.add_section(section)
+        return section
 
-    def add_sub_resource(self, type: str, **kwargs) -> int:
+    def add_sub_resource(self, type: str, **kwargs) -> GDSubResourceSection:
         """ Add a sub_resource """
         next_id = 1 + max(
             [s.id for s in self.get_sections("sub_resource")]  # type: ignore
             + [0]
         )
-        self.add_section(GDSubResourceSection(type, next_id, **kwargs))
-        return next_id
+        section = GDSubResourceSection(type, next_id, **kwargs)
+        self.add_section(section)
+        return section
 
     def add_node(
         self, name: str, type: str = None, parent: str = None, index: int = None,
@@ -161,8 +163,9 @@ class GDFile(object):
                 tree.root.add_child(Node('HealthBar', instance=1))
             scene.write("MyScene.tscn")
         """
-        nodes = self.get_sections("node")
-        tree = Tree.build(nodes)
+        from .tree import Tree
+
+        tree = Tree.build(self)
         yield tree
         for i in range(len(self._sections) - 1, -1, -1):
             section = self._sections[i]
@@ -190,6 +193,13 @@ class GDFile(object):
         return cls.from_parser(scene_file.parseString(contents, parseAll=True))
 
     @classmethod
+    def load(cls: Type[GDFileType], filepath: str):
+        with open(filepath, "r") as ifile:
+            file = cls.parse(ifile.read())
+        file.project_root = find_project_root(filepath)
+        return file
+
+    @classmethod
     def from_parser(cls: Type[GDFileType], parse_result):
         first_section = parse_result[0]
         if first_section.header.name == "gd_scene":
@@ -204,7 +214,6 @@ class GDFile(object):
 
     def write(self, filename):
         """ Writes this to a file """
-        ext = os.path.splitext(filename)[1]
         with open(filename, "w") as ofile:
             ofile.write(str(self))
 

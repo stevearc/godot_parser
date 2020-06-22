@@ -2,7 +2,7 @@ import re
 from collections import OrderedDict
 from typing import Optional, Type, TypeVar
 
-from .objects import ExtResource
+from .objects import ExtResource, SubResource
 from .util import stringify_object
 
 __all__ = [
@@ -152,10 +152,7 @@ class GDSection(metaclass=GDSectionMeta):
     def __eq__(self, other) -> bool:
         if not isinstance(other, GDSection):
             return False
-        return (
-            self.header.name == other.header.name
-            and self.properties == other.properties
-        )
+        return self.header == other.header and self.properties == other.properties
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
@@ -191,6 +188,10 @@ class GDExtResourceSection(GDSection):
     def id(self, id: int) -> None:
         self.header["id"] = id
 
+    @property
+    def reference(self) -> ExtResource:
+        return ExtResource(self.id)
+
 
 class GDSubResourceSection(GDSection):
     """ Section representing a [sub_resource] """
@@ -213,6 +214,10 @@ class GDSubResourceSection(GDSection):
     @id.setter
     def id(self, id: int) -> None:
         self.header["id"] = id
+
+    @property
+    def reference(self) -> SubResource:
+        return SubResource(self.id)
 
 
 class GDNodeSection(GDSection):

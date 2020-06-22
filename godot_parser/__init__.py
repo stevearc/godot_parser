@@ -5,10 +5,6 @@ from .tree import *
 
 __version__ = "0.1"
 
+parse = GDFile.parse
 
-def parse(string: str) -> GDFile:
-    return GDFile.parse(string)
-
-
-def load(fp) -> GDFile:
-    return parse(fp.read())
+load = GDFile.load

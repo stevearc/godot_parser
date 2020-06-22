@@ -1,15 +1,7 @@
 import tempfile
 import unittest
 
-from godot_parser import (
-    ExtResource,
-    GDObject,
-    GDResource,
-    GDResourceSection,
-    GDScene,
-    Node,
-    SubResource,
-)
+from godot_parser import GDObject, GDResource, GDResourceSection, GDScene, Node
 
 
 class TestGDFile(unittest.TestCase):
@@ -19,6 +11,29 @@ class TestGDFile(unittest.TestCase):
     def test_basic_scene(self):
         """ Run the parsing test cases """
         self.assertEqual(str(GDScene()), "[gd_scene load_steps=1 format=2]\n")
+
+    def test_all_data_types(self):
+        """ Run the parsing test cases """
+        res = GDResource()
+        res.add_section(
+            GDResourceSection(
+                list=[1, 2.0, "string"],
+                map={"key": ["nested", GDObject("Vector2", 1, 1)]},
+                empty=None,
+            )
+        )
+        self.assertEqual(
+            str(res),
+            """[gd_resource load_steps=1 format=2]
+
+[resource]
+list = [ 1, 2.0, "string" ]
+map = {
+"key": [ "nested", Vector2( 1, 1 ) ]
+}
+empty = null
+""",
+        )
 
     def test_ext_resource(self):
         """ Test serializing a scene with an ext_resource """
@@ -143,34 +158,34 @@ visible = false
     def test_addremove_ext_res(self):
         """ Test adding and removing an ext_resource """
         scene = GDScene()
-        res_id = scene.add_ext_resource("res://Res.tscn", "PackedScene")
-        self.assertEqual(res_id, 1)
-        res2_id = scene.add_ext_resource("res://Sprite.png", "Texture")
-        self.assertEqual(res2_id, 2)
+        res = scene.add_ext_resource("res://Res.tscn", "PackedScene")
+        self.assertEqual(res.id, 1)
+        res2 = scene.add_ext_resource("res://Sprite.png", "Texture")
+        self.assertEqual(res2.id, 2)
         node = scene.add_node("Sprite", "Sprite")
-        node["texture"] = ExtResource(res2_id)
-        node["textures"] = [ExtResource(res2_id)]
-        node["texture_map"] = {"tex": ExtResource(res2_id)}
-        node["texture_pool"] = GDObject("ResourcePool", ExtResource(res2_id))
+        node["texture"] = res2.reference
+        node["textures"] = [res2.reference]
+        node["texture_map"] = {"tex": res2.reference}
+        node["texture_pool"] = GDObject("ResourcePool", res2.reference)
 
         s = scene.find_section(path="res://Res.tscn")
         scene.remove_section(s)
 
         s = scene.find_section("ext_resource")
         self.assertEqual(s.id, 1)
-        self.assertEqual(node["texture"].id, 1)
-        self.assertEqual(node["textures"][0].id, 1)
-        self.assertEqual(node["texture_map"]["tex"].id, 1)
-        self.assertEqual(node["texture_pool"].args[0].id, 1)
+        self.assertEqual(node["texture"], s.reference)
+        self.assertEqual(node["textures"][0], s.reference)
+        self.assertEqual(node["texture_map"]["tex"], s.reference)
+        self.assertEqual(node["texture_pool"].args[0], s.reference)
 
     def test_addremove_sub_res(self):
         """ Test adding and removing a sub_resource """
         scene = GDResource()
-        res_id = scene.add_sub_resource("CircleShape2D")
-        self.assertEqual(res_id, 1)
-        res2_id = scene.add_sub_resource("AnimationNodeAnimation")
-        self.assertEqual(res2_id, 2)
-        resource = GDResourceSection(shape=SubResource(res2_id))
+        res = scene.add_sub_resource("CircleShape2D")
+        self.assertEqual(res.id, 1)
+        res2 = scene.add_sub_resource("AnimationNodeAnimation")
+        self.assertEqual(res2.id, 2)
+        resource = GDResourceSection(shape=res2.reference)
         scene.add_section(resource)
 
         s = scene.find_section(type="CircleShape2D")
@@ -178,4 +193,4 @@ visible = false
 
         s = scene.find_section("sub_resource")
         self.assertEqual(s.id, 1)
-        self.assertEqual(resource["shape"].id, 1)
+        self.assertEqual(resource["shape"], s.reference)

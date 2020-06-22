@@ -23,17 +23,17 @@ The high-level API has a bit of application logic on top to mirror Godot
 functionality and make it easier to perform certain tasks. Let's look at an
 example by creating a new scene file for a Player::
 
-  from godot_parser import GDScene, Node, ExtResource
+  from godot_parser import GDScene, Node
 
   scene = GDScene()
-  tex_id = scene.add_ext_resource("res://PlayerSprite.png", "PackedScene")
+  res = scene.add_ext_resource("res://PlayerSprite.png", "PackedScene")
   with scene.use_tree() as tree:
       tree.root = Node("Player", type="KinematicBody2D")
       tree.root.add_child(
           Node(
               "Sprite",
               type="Sprite",
-              properties={"texture": ExtResource(tex_id)},
+              properties={"texture": res.reference},
           )
       )
   scene.write("Player.tscn")
@@ -86,8 +86,7 @@ Find all scenes in your project with a "Sensor" node and change the
                   update_collision_layer(os.path.join(root, file))
 
   def update_collision_layer(filepath):
-      with open(filepath, 'r') as ifile:
-          scene = load(ifile)
+      scene = load(filepath)
       updated = False
       with scene.use_tree() as tree:
           sensor = tree.root.get_node('Sensor')

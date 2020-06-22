@@ -1,10 +1,17 @@
 """ Helper API for working with the Godot scene tree structure """
 from collections import OrderedDict
-from typing import Union
+from typing import Optional, Union, cast
 
+from .files import GDFile
 from .sections import GDNodeSection
+from .util import gdpath_to_filepath
 
-__all__ = ["Node"]
+__all__ = ["Node", "TreeMutationException"]
+SENTINEL = object()
+
+
+class TreeMutationException(Exception):
+    """ Raised when attempting to mutate the tree in an unsupported way """
 
 
 class Node(object):
@@ -23,21 +30,91 @@ class Node(object):
         section: GDNodeSection = None,
         properties: dict = None,
     ):
-        self.name = name
-        self.type = type
-        self.instance = instance
-        self.parent = None
+        self._name = name
+        self._type = type
+        self._instance = instance
+        self._parent = None
+        self._index = None
         self.section = section or GDNodeSection(name)
         self.properties = (
             OrderedDict() if properties is None else OrderedDict(properties)
         )
         self._children = []  # type: ignore
+        self._inherited_node: Optional["Node"] = None
+
+    def _mark_inherited(self):
+        clone = self.clone()
+        clone._inherited_node = self._inherited_node
+        self._inherited_node = clone
+        self.properties.clear()
+        self._type = None
+        self._instance = None
+        self.section = GDNodeSection(self.name)
+
+    def clone(self):
+        return Node(
+            self.name, self.type, self.instance, properties=OrderedDict(self.properties)
+        )
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, new_name: str) -> None:
+        if self._inherited_node is not None:
+            raise TreeMutationException("Cannot change the name of an inherited node")
+        self._name = new_name
+
+    @property
+    def type(self) -> Optional[str]:
+        if self._inherited_node is not None:
+            return self._inherited_node.type
+        return self._type
+
+    @type.setter
+    def type(self, new_type: Optional[str]) -> None:
+        if self.is_inherited:
+            raise TreeMutationException("Cannot change the type of an inherited node")
+        if new_type is not None:
+            self._instance = None
+        self._type = new_type
+
+    @property
+    def instance(self) -> Optional[int]:
+        if self._inherited_node is not None:
+            return self._inherited_node.instance
+        return self._instance
+
+    @instance.setter
+    def instance(self, new_instance: Optional[int]) -> None:
+        if self.is_inherited:
+            raise TreeMutationException(
+                "Cannot change the instance of an inherited node"
+            )
+        if new_instance is not None:
+            self._type = None
+        self._instance = new_instance
 
     def __getitem__(self, k: str):
-        return self.properties[k]
+        v = self.properties.get(k, SENTINEL)
+        if v is SENTINEL:
+            if self._inherited_node is not None:
+                return self._inherited_node[k]
+            raise KeyError("No property %s found on node %s" % (k, self.name))
+        return v
 
     def __setitem__(self, k: str, v):
-        self.properties[k] = v
+        if self._inherited_node is not None and v == self._inherited_node.get(
+            k, SENTINEL
+        ):
+            del self[k]
+        else:
+            self.properties[k] = v
 
     def __delitem__(self, k: str):
         try:
@@ -46,7 +123,12 @@ class Node(object):
             pass
 
     def get(self, k: str, default=None):
-        return self.properties.get(k, default)
+        v = self.properties.get(k, SENTINEL)
+        if v is SENTINEL:
+            if self._inherited_node is not None:
+                return self._inherited_node.get(k, default)
+            return default
+        return v
 
     @classmethod
     def from_section(cls, section: GDNodeSection):
@@ -76,16 +158,35 @@ class Node(object):
             child_path = self.name
         else:
             child_path = path + "/" + self.name
+        child_idx = 0
+        # Assign an index to children if we were assigned one, or if we are the root
+        # node of an inherited scene
+        use_index = self._index is not None or (
+            self.parent is None and self._instance is not None
+        )
         for child in self._children:
+            if use_index:
+                child._index = child_idx
+                child_idx += 1
             yield from child.flatten(child_path)
 
     def _update_section(self, path: str = None):
         self.section.name = self.name
-        self.section.type = self.type
+        self.section.type = self._type
         self.section.parent = path
-        self.section.instance = self.instance
+        self.section.instance = self._instance
         self.section.properties = self.properties
+        if self._index is not None:
+            self.section.index = self._index
         return self.section
+
+    @property
+    def is_inherited(self):
+        return self._inherited_node is not None
+
+    @property
+    def has_changes(self):
+        return bool(self.properties)
 
     def get_children(self):
         """ Get all children of this node """
@@ -99,7 +200,7 @@ class Node(object):
             if node.name == name_or_index:
                 return node
 
-    def get_node(self, path):
+    def get_node(self, path: str):
         """ Mimics the Godot get_node() behavior """
         if path in (".", ""):
             return self
@@ -112,7 +213,21 @@ class Node(object):
     def add_child(self, node):
         """ Add a child to the current node """
         self._children.append(node)
-        node.parent = self
+        node._parent = self
+
+    def insert_child(self, index: int, node):
+        """ Add a child to the current node before the specified index """
+        self._children.insert(index, node)
+        node._parent = self
+
+    def _merge_child(self, section):
+        """ Add a child that may be an inherited node """
+        for child in self._children:
+            if child.name == section.name:
+                child.section = section
+                child.properties = section.properties
+                return
+        self.add_child(Node.from_section(section))
 
     def remove_from_parent(self):
         """ Remove this node from its parent """
@@ -127,15 +242,28 @@ class Node(object):
         if isinstance(node_or_name_or_index, str):
             for i, node in enumerate(self._children):
                 if node.name == node_or_name_or_index:
+                    if node.is_inherited:
+                        raise TreeMutationException(
+                            "Cannot remove inherited node %s" % node.name
+                        )
                     child = self._children.pop(i)
-                    return
+                    break
         elif isinstance(node_or_name_or_index, int):
-            child = self._children.pop(node_or_name_or_index)
+            child = self._children[node_or_name_or_index]
+            if child.is_inherited:
+                raise TreeMutationException(
+                    "Cannot remove inherited node %s" % child.name
+                )
+            self._children.pop(node_or_name_or_index)
         else:
-            self._children.remove(node_or_name_or_index)
             child = node_or_name_or_index
+            if child.is_inherited:
+                raise TreeMutationException(
+                    "Cannot remove inherited node %s" % child.name
+                )
+            self._children.remove(node_or_name_or_index)
         if child is not None:
-            child.parent = None
+            child._parent = None
 
     def __str__(self):
         return "Node(%s)" % self.name
@@ -150,17 +278,24 @@ class Tree(object):
     def __init__(self, root=None):
         self.root = root
 
+    def get_node(self, path: str) -> Node:
+        """ Mimics the Godot get_node() behavior """
+        return self.root.get_node(path)
+
     @classmethod
-    def build(cls, nodes):
+    def build(cls, file: GDFile):
         """ Build the Tree from a flat list of [node]'s """
         tree = cls()
         # Makes assumptions that the nodes are well-ordered
-        for node in nodes:
-            if node.parent is None:
-                tree.root = Node.from_section(node)
+        for gd_section in file.get_sections("node"):
+            section = cast(GDNodeSection, gd_section)
+            if section.parent is None:
+                tree.root = Node.from_section(section)
+                if tree.root.instance is not None:
+                    _load_parent_scene(tree.root, file)
             else:
-                parent = tree.root.get_node(node.parent)
-                parent.add_child(Node.from_section(node))
+                parent = tree.root.get_node(section.parent)
+                parent._merge_child(section)
         return tree
 
     def flatten(self):
@@ -169,5 +304,29 @@ class Tree(object):
         if self.root is None:
             return ret
         for node in self.root.flatten():
+            if node.is_inherited and not node.has_changes:
+                continue
             ret.append(node.section)
         return ret
+
+
+def _load_parent_scene(root: Node, file: GDFile):
+    if file.project_root is None:
+        raise RuntimeError(
+            "use_tree() with inherited scenes requires a project_root on the GDFile"
+        )
+    parent_res = file.find_section("ext_resource", id=root.instance)
+    if parent_res is None:
+        raise FileNotFoundError(
+            "Could not find parent scene resource id(%d)" % root.instance
+        )
+    parent_file = GDFile.load(gdpath_to_filepath(file.project_root, parent_res.path))
+    parent_tree = Tree.build(parent_file)
+    # Transfer parent scene's children to this scene
+    for child in parent_tree.root.get_children():
+        root.add_child(child)
+    # Mark the entire parent tree as inherited
+    for node in parent_tree.root.flatten():
+        node._mark_inherited()
+    # Mark the root node as inherited
+    root._inherited_node = parent_tree.root
