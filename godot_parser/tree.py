@@ -1,6 +1,6 @@
 """ Helper API for working with the Godot scene tree structure """
 from collections import OrderedDict
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, Union
 
 from .files import GDFile
 from .sections import GDNodeSection
@@ -294,8 +294,7 @@ class Tree(object):
         """ Build the Tree from a flat list of [node]'s """
         tree = cls()
         # Makes assumptions that the nodes are well-ordered
-        for gd_section in file.get_sections("node"):
-            section = cast(GDNodeSection, gd_section)
+        for section in file.get_nodes():
             if section.parent is None:
                 root = Node.from_section(section)
                 tree.root = root
@@ -324,11 +323,13 @@ class Tree(object):
 
 
 def _load_parent_scene(root: Node, file: GDFile):
+    if root.instance is None:
+        raise RuntimeError("This should only be called if root.instance is non-None")
     if file.project_root is None:
         raise RuntimeError(
             "use_tree() with inherited scenes requires a project_root on the GDFile"
         )
-    parent_res = file.find_section("ext_resource", id=root.instance)
+    parent_res = file.find_ext_resource(id=root.instance)
     if parent_res is None:
         raise FileNotFoundError(
             "Could not find parent scene resource id(%d)" % root.instance

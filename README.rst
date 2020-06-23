@@ -89,7 +89,7 @@ Find all scenes in your project with a "Sensor" node and change the
       scene = load(filepath)
       updated = False
       with scene.use_tree() as tree:
-          sensor = tree.root.get_node('Sensor')
+          sensor = tree.get_node('Sensor')
           if sensor is not None:
               sensor['collision_layer'] = 5
               updated = True

@@ -1,6 +1,6 @@
 import re
 from collections import OrderedDict
-from typing import Optional, Type, TypeVar
+from typing import Any, Optional, Type, TypeVar
 
 from .objects import ExtResource, SubResource
 from .util import stringify_object
@@ -14,7 +14,6 @@ __all__ = [
     "GDResourceSection",
 ]
 
-GDSectionHeaderType = TypeVar("GDSectionHeaderType", bound="GDSectionHeader")
 
 GD_SECTION_REGISTRY = {}
 
@@ -34,10 +33,10 @@ class GDSectionHeader(object):
         for k, v in kwargs.items():
             self.attributes[k] = v
 
-    def __getitem__(self, k: str):
+    def __getitem__(self, k: str) -> Any:
         return self.attributes[k]
 
-    def __setitem__(self, k: str, v):
+    def __setitem__(self, k: str, v: Any) -> None:
         self.attributes[k] = v
 
     def __delitem__(self, k: str):
@@ -46,13 +45,11 @@ class GDSectionHeader(object):
         except KeyError:
             pass
 
-    def get(self, k: str, default=None):
+    def get(self, k: str, default: Any = None) -> Any:
         return self.attributes.get(k, default)
 
     @classmethod
-    def from_parser(
-        cls: Type[GDSectionHeaderType], parse_result
-    ) -> GDSectionHeaderType:
+    def from_parser(cls: Type["GDSectionHeader"], parse_result) -> "GDSectionHeader":
         header = cls(parse_result[0])
         for attribute in parse_result[1:]:
             header.attributes[attribute[0]] = attribute[1]
@@ -69,12 +66,12 @@ class GDSectionHeader(object):
     def __repr__(self) -> str:
         return "GDSectionHeader(%s)" % self.__str__()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, GDSectionHeader):
             return False
         return self.name == other.name and self.attributes == other.attributes
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
 
@@ -109,23 +106,23 @@ class GDSection(metaclass=GDSectionMeta):
         for k, v in kwargs.items():
             self.properties[k] = v
 
-    def __getitem__(self, k: str):
+    def __getitem__(self, k: str) -> Any:
         return self.properties[k]
 
-    def __setitem__(self, k: str, v):
+    def __setitem__(self, k: str, v: Any) -> None:
         self.properties[k] = v
 
-    def __delitem__(self, k: str):
+    def __delitem__(self, k: str) -> None:
         try:
             del self.properties[k]
         except KeyError:
             pass
 
-    def get(self, k: str, default=None):
+    def get(self, k: str, default: Any = None) -> Any:
         return self.properties.get(k, default)
 
     @classmethod
-    def from_parser(cls: Type[GDSectionType], parse_result):
+    def from_parser(cls: Type[GDSectionType], parse_result) -> GDSectionType:
         header = parse_result[0]
         factory = GD_SECTION_REGISTRY.get(header.name, cls)
         section = factory.__new__(factory)
@@ -149,12 +146,12 @@ class GDSection(metaclass=GDSectionMeta):
     def __repr__(self) -> str:
         return "%s(%s)" % (type(self).__name__, self.__str__())
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, GDSection):
             return False
         return self.header == other.header and self.properties == other.properties
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
 

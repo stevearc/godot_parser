@@ -238,13 +238,13 @@ flip_h = true
     def test_unchanged_sections(self):
         """ Inherited nodes do not appear in sections """
         scene = GDScene.load(self.leaf_scene)
-        num_nodes = len(scene.get_sections("node"))
+        num_nodes = len(scene.get_nodes())
         self.assertEqual(num_nodes, 2)
         with scene.use_tree() as tree:
             sprite = tree.get_node("Sprite")
             sprite["flip_v"] = True
         # No new nodes
-        num_nodes = len(scene.get_sections("node"))
+        num_nodes = len(scene.get_nodes())
         self.assertEqual(num_nodes, 2)
 
     def test_overwrite_sections(self):
@@ -253,7 +253,7 @@ flip_h = true
         with scene.use_tree() as tree:
             node = tree.get_node("Health/LifeBar")
             node["pause_mode"] = 2
-        num_nodes = len(scene.get_sections("node"))
+        num_nodes = len(scene.get_nodes())
         self.assertEqual(num_nodes, 3)
         node = scene.find_section("node", name="LifeBar", parent="Health")
         self.assertIsNotNone(node)
