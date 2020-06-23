@@ -1,6 +1,6 @@
 """ Helper API for working with the Godot scene tree structure """
 from collections import OrderedDict
-from typing import Optional, Union, cast
+from typing import Any, List, Optional, Union, cast
 
 from .files import GDFile
 from .sections import GDNodeSection
@@ -22,6 +22,10 @@ class Node(object):
     a tree structure instead of the flat list that the file format demands.
     """
 
+    _children: List["Node"]
+    _parent: Optional["Node"]
+    _index: Optional[int]
+
     def __init__(
         self,
         name: str,
@@ -42,7 +46,7 @@ class Node(object):
         self._children = []  # type: ignore
         self._inherited_node: Optional["Node"] = None
 
-    def _mark_inherited(self):
+    def _mark_inherited(self) -> None:
         clone = self.clone()
         clone._inherited_node = self._inherited_node
         self._inherited_node = clone
@@ -51,13 +55,13 @@ class Node(object):
         self._instance = None
         self.section = GDNodeSection(self.name)
 
-    def clone(self):
+    def clone(self) -> "Node":
         return Node(
             self.name, self.type, self.instance, properties=OrderedDict(self.properties)
         )
 
     @property
-    def parent(self):
+    def parent(self) -> Optional["Node"]:
         return self._parent
 
     @property
@@ -100,7 +104,7 @@ class Node(object):
             self._type = None
         self._instance = new_instance
 
-    def __getitem__(self, k: str):
+    def __getitem__(self, k: str) -> Any:
         v = self.properties.get(k, SENTINEL)
         if v is SENTINEL:
             if self._inherited_node is not None:
@@ -108,7 +112,7 @@ class Node(object):
             raise KeyError("No property %s found on node %s" % (k, self.name))
         return v
 
-    def __setitem__(self, k: str, v):
+    def __setitem__(self, k: str, v: Any) -> None:
         if self._inherited_node is not None and v == self._inherited_node.get(
             k, SENTINEL
         ):
@@ -116,13 +120,13 @@ class Node(object):
         else:
             self.properties[k] = v
 
-    def __delitem__(self, k: str):
+    def __delitem__(self, k: str) -> None:
         try:
             del self.properties[k]
         except KeyError:
             pass
 
-    def get(self, k: str, default=None):
+    def get(self, k: str, default: Any = None) -> Any:
         v = self.properties.get(k, SENTINEL)
         if v is SENTINEL:
             if self._inherited_node is not None:
@@ -170,7 +174,7 @@ class Node(object):
                 child_idx += 1
             yield from child.flatten(child_path)
 
-    def _update_section(self, path: str = None):
+    def _update_section(self, path: str = None) -> None:
         self.section.name = self.name
         self.section.type = self._type
         self.section.parent = path
@@ -178,29 +182,29 @@ class Node(object):
         self.section.properties = self.properties
         if self._index is not None:
             self.section.index = self._index
-        return self.section
 
     @property
-    def is_inherited(self):
+    def is_inherited(self) -> bool:
         return self._inherited_node is not None
 
     @property
-    def has_changes(self):
+    def has_changes(self) -> bool:
         return bool(self.properties)
 
-    def get_children(self):
+    def get_children(self) -> List["Node"]:
         """ Get all children of this node """
         return self._children
 
-    def get_child(self, name_or_index: Union[int, str]):
+    def get_child(self, name_or_index: Union[int, str]) -> Optional["Node"]:
         """ Get a child by name or index """
         if isinstance(name_or_index, int):
             return self._children[name_or_index]
         for node in self._children:
             if node.name == name_or_index:
                 return node
+        return None
 
-    def get_node(self, path: str):
+    def get_node(self, path: str) -> Optional["Node"]:
         """ Mimics the Godot get_node() behavior """
         if path in (".", ""):
             return self
@@ -210,17 +214,17 @@ class Node(object):
             return None
         return child.get_node("/".join(pieces[1:]))
 
-    def add_child(self, node):
+    def add_child(self, node: "Node") -> None:
         """ Add a child to the current node """
         self._children.append(node)
         node._parent = self
 
-    def insert_child(self, index: int, node):
+    def insert_child(self, index: int, node: "Node") -> None:
         """ Add a child to the current node before the specified index """
         self._children.insert(index, node)
         node._parent = self
 
-    def _merge_child(self, section):
+    def _merge_child(self, section: GDNodeSection) -> None:
         """ Add a child that may be an inherited node """
         for child in self._children:
             if child.name == section.name:
@@ -229,11 +233,12 @@ class Node(object):
                 return
         self.add_child(Node.from_section(section))
 
-    def remove_from_parent(self):
+    def remove_from_parent(self) -> None:
         """ Remove this node from its parent """
-        self.parent.remove_child(self)
+        if self.parent is not None:
+            self.parent.remove_child(self)
 
-    def remove_child(self, node_or_name_or_index):
+    def remove_child(self, node_or_name_or_index: Union[str, int, "Node"]) -> None:
         """
         Remove a child
 
@@ -275,11 +280,13 @@ class Node(object):
 class Tree(object):
     """ Container for the scene tree """
 
-    def __init__(self, root=None):
+    def __init__(self, root: Optional[Node] = None):
         self.root = root
 
-    def get_node(self, path: str) -> Node:
+    def get_node(self, path: str) -> Optional[Node]:
         """ Mimics the Godot get_node() behavior """
+        if self.root is None:
+            return None
         return self.root.get_node(path)
 
     @classmethod
@@ -290,17 +297,23 @@ class Tree(object):
         for gd_section in file.get_sections("node"):
             section = cast(GDNodeSection, gd_section)
             if section.parent is None:
-                tree.root = Node.from_section(section)
-                if tree.root.instance is not None:
-                    _load_parent_scene(tree.root, file)
+                root = Node.from_section(section)
+                tree.root = root
+                if root.instance is not None:
+                    _load_parent_scene(root, file)
             else:
-                parent = tree.root.get_node(section.parent)
+                parent = tree.get_node(section.parent)
+                if parent is None:
+                    raise TreeMutationException(
+                        "Cannot find parent node %s of %s"
+                        % (section.parent, section.name)
+                    )
                 parent._merge_child(section)
         return tree
 
-    def flatten(self):
+    def flatten(self) -> List[GDNodeSection]:
         """ Flatten the tree back into a list of GDNodeSection """
-        ret = []
+        ret: List[GDNodeSection] = []
         if self.root is None:
             return ret
         for node in self.root.flatten():
