@@ -304,7 +304,7 @@ class Tree(object):
         if self.root is None:
             return ret
         for node in self.root.flatten():
-            if node.is_inherited and not node.has_changes:
+            if node.is_inherited and not node.has_changes and node.parent is not None:
                 continue
             ret.append(node.section)
         return ret

@@ -71,7 +71,12 @@ class GDFile(object):
             return self._sections
         return [s for s in self._sections if s.header.name == name]
 
-    def find_section(self, section_name_: str = None, **constraints):
+    def find_section(
+        self,
+        section_name_: str = None,
+        property_constraints: Optional[dict] = None,
+        **constraints
+    ):
         """
         Find the first section that matches
 
@@ -85,11 +90,18 @@ class GDFile(object):
             # Find the first ext_resource that references Health.tscn
             scene.find_section('ext_resourcee', path='Health.tscn')
         """
-        for section in self.find_all(section_name_, **constraints):
+        for section in self.find_all(
+            section_name_, property_constraints=property_constraints, **constraints
+        ):
             return section
         return None
 
-    def find_all(self, section_name_: str = None, **constraints):
+    def find_all(
+        self,
+        section_name_: str = None,
+        property_constraints: Optional[dict] = None,
+        **constraints
+    ):
         """ Same as find_section, but returns all matches """
         for section in self.get_sections(section_name_):
             found = True
@@ -100,6 +112,11 @@ class GDFile(object):
                     continue
                 found = False
                 break
+            if property_constraints is not None:
+                for k, v in property_constraints.items():
+                    if section.get(k) != v:
+                        found = False
+                        break
             if found:
                 yield section
 
