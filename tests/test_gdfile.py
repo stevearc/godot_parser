@@ -194,3 +194,18 @@ visible = false
         s = scene.find_section("sub_resource")
         self.assertEqual(s.id, 1)
         self.assertEqual(resource["shape"], s.reference)
+
+    def test_find_constraints(self):
+        """ Test for the find_section constraints """
+        scene = GDScene()
+        res1 = scene.add_sub_resource("CircleShape2D", radius=1)
+        res2 = scene.add_sub_resource("CircleShape2D", radius=2)
+
+        found = list(scene.find_all("sub_resource"))
+        self.assertCountEqual(found, [res1, res2])
+
+        found = list(scene.find_all("sub_resource", id=res1.id))
+        self.assertEqual(found, [res1])
+
+        found = list(scene.find_all("sub_resource", {"radius": 2}))
+        self.assertEqual(found, [res2])
