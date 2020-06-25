@@ -16,7 +16,7 @@ The high-level API has a bit of application logic on top to mirror Godot
 functionality and make it easier to perform certain tasks. Let's look at an
 example by creating a new scene file for a Player:
 
-```
+```python
   from godot_parser import GDScene, Node
 
   scene = GDScene()
@@ -39,7 +39,7 @@ cover everything.
 ## Low-level API
 Let's look at creating that same Player scene with the low-level API:
 
-```
+```python
   from godot_parser import GDFile, ExtResource, GDSection, GDSectionHeader
 
   scene = GDFile(
@@ -70,7 +70,7 @@ Here are some more examples of how you can use this library.
 Find all scenes in your project with a "Sensor" node and change the
 `collision_layer`:
 
-```
+```python
   import os
   import sys
   from godot_parser import load
