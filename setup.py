@@ -5,8 +5,8 @@ import re
 from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(HERE, "README.rst")).read()
-CHANGES = open(os.path.join(HERE, "CHANGES.rst")).read()
+README = open(os.path.join(HERE, "README.md")).read()
+CHANGES = open(os.path.join(HERE, "CHANGES.md")).read()
 REQUIREMENTS_TEST = open(os.path.join(HERE, "requirements_test.txt")).readlines()
 
 REQUIREMENTS = ["pyparsing"]
@@ -18,7 +18,7 @@ if __name__ == "__main__":
         version="0.1",
         description="Python library for parsing Godot scene files",
         long_description=README + "\n\n" + CHANGES,
-        long_description_content_type="text/x-rst",
+        long_description_content_type="text/markdown",
         classifiers=[
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
