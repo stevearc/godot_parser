@@ -37,6 +37,7 @@ if __name__ == "__main__":
         platforms="any",
         zip_safe=False,
         include_package_data=True,
+        python_requires=">=3.6",
         packages=find_packages(exclude=("tests",)),
         install_requires=REQUIREMENTS,
         tests_require=REQUIREMENTS + REQUIREMENTS_TEST,
