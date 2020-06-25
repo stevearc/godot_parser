@@ -15,7 +15,7 @@ REQUIREMENTS = ["pyparsing"]
 if __name__ == "__main__":
     setup(
         name="godot_parser",
-        version="0.1",
+        version="0.1.1",
         description="Python library for parsing Godot scene files",
         long_description=README + "\n\n" + CHANGES,
         long_description_content_type="text/markdown",
