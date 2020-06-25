@@ -100,7 +100,7 @@ class TestParser(unittest.TestCase):
             if expected == "error":
                 assert False, "Parsing '%s' should have failed.\nGot: %s" % (
                     string,
-                    parse_result.dump(),
+                    parse_result,
                 )
             else:
                 self.assertEqual(parse_result, expected)

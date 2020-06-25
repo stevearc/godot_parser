@@ -331,7 +331,7 @@ def _load_parent_scene(root: Node, file: GDFile):
         )
     parent_res = file.find_ext_resource(id=root.instance)
     if parent_res is None:
-        raise FileNotFoundError(
+        raise RuntimeError(
             "Could not find parent scene resource id(%d)" % root.instance
         )
     parent_file = GDFile.load(gdpath_to_filepath(file.project_root, parent_res.path))

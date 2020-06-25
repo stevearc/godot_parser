@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 from godot_parser import GDScene, Node, SubResource, TreeMutationException
-from godot_parser.util import find_project_root
+from godot_parser.util import find_project_root, gdpath_to_filepath
 
 
 class TestTree(unittest.TestCase):
@@ -76,7 +76,8 @@ class TestTree(unittest.TestCase):
         """ Empty scenes should not crash """
         scene = GDScene()
         with scene.use_tree() as tree:
-            pass
+            n = tree.get_node("Any")
+            self.assertIsNone(n)
 
     def test_get_missing_node(self):
         """ get_node on missing node should return None """
@@ -275,3 +276,37 @@ flip_h = true
         os.mkdir(nested)
         root = find_project_root(nested)
         self.assertEqual(root, self.project_dir)
+
+    def test_invalid_tree(self):
+        """ Raise exception when tree is invalid """
+        scene = GDScene()
+        scene.add_node("RootNode")
+        scene.add_node("Child", parent="Missing")
+        self.assertRaises(TreeMutationException, lambda: scene.get_node("Child"))
+
+    def test_missing_root(self):
+        """ Raise exception when GDScene is inherited but missing project_root """
+        scene = GDScene()
+        scene.add_ext_node("Root", 1)
+        self.assertRaises(RuntimeError, lambda: scene.get_node("Root"))
+
+    def test_missing_ext_resource(self):
+        """ Raise exception when GDScene is inherited but ext_resource is missing """
+        scene = GDScene.load(self.leaf_scene)
+        for section in scene.get_ext_resources():
+            scene.remove_section(section)
+        self.assertRaises(RuntimeError, lambda: scene.get_node("Root"))
+
+
+class TestUtil(unittest.TestCase):
+
+    """ Tests for util """
+
+    def test_bad_gdpath(self):
+        """ Raise exception on bad gdpath """
+        self.assertRaises(ValueError, lambda: gdpath_to_filepath("/", "foobar"))
+
+    def test_no_project(self):
+        """ If no Godot project is found, return None """
+        root = find_project_root(tempfile.gettempdir())
+        self.assertIsNone(root)

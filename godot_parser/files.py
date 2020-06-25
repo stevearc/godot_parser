@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterable, List, Optional, Type, TypeVar, cast
+from typing import Iterable, List, Optional, Type, TypeVar, Union, cast
 
 from .objects import ExtResource, GDObject, SubResource
 from .sections import (
@@ -312,20 +312,26 @@ class GDCommonFile(GDFile):
         section = self._sections.pop(index)
         if section.header.name in ["ext_resource", "sub_resource"]:
             self.load_steps -= 1
-            self._recalculate_resource_ids(section.header.name)
 
-    def _recalculate_resource_ids(self, section_name):
-        """ Keep resource IDs in sync after removing one """
+    def renumber_resource_ids(self):
+        """ Refactor all resource IDs to be sequential with no gaps """
+        self._renumber_resource_ids(self.get_ext_resources(), ExtResource)
+        self._renumber_resource_ids(self.get_sub_resources(), SubResource)
+
+    def _renumber_resource_ids(
+        self,
+        sections: List[Union[GDExtResourceSection, GDSubResourceSection]],
+        reference_type: Type[Union[ExtResource, SubResource]],
+    ) -> None:
         id_map = {}
         # First we renumber all the resource IDs so there are no gaps
-        for i, section in enumerate(self.get_sections(section_name)):
+        for i, section in enumerate(sections):
             id_map[section.id] = i + 1
             section.id = i + 1
-        class_type = ExtResource if section_name == "ext_resource" else SubResource
 
         def replace(value):
-            if isinstance(value, class_type):
-                value.id = id_map.get(value.id)
+            if isinstance(value, reference_type):
+                value.id = id_map.get(value.id, value.id)
             elif isinstance(value, list):
                 for v in value:
                     replace(v)
@@ -341,8 +347,8 @@ class GDCommonFile(GDFile):
         for node in self.get_nodes():
             replace(node.header.attributes)
             replace(node.properties)
-        for node in self.get_sections("resource"):
-            replace(node.properties)
+        for resource in self.get_sections("resource"):
+            replace(resource.properties)
 
 
 class GDScene(GDCommonFile):

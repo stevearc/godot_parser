@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 
-from godot_parser import GDObject, GDResource, GDResourceSection, GDScene, Node
+from godot_parser import GDFile, GDObject, GDResource, GDResourceSection, GDScene, Node
 
 
 class TestGDFile(unittest.TestCase):
@@ -117,12 +117,15 @@ visible = false
         )
 
     def test_remove_section(self):
-        """ Test that you can remove sections """
-        scene = GDScene()
-        scene.add_node("RootNode", type="Node2D")
-        node = scene.add_node("Child", type="Area2D", parent=".")
-        self.assertTrue(scene.remove_section(node))
-        self.assertEqual(len(scene.get_sections()), 2)
+        """ Test GDScene.remove_section """
+        scene = GDFile()
+        res = scene.add_ext_resource("res://Other.tscn", "PackedScene")
+        result = scene.remove_section(GDResourceSection())
+        self.assertFalse(result)
+        self.assertEqual(len(scene.get_sections()), 1)
+        result = scene.remove_section(res)
+        self.assertTrue(result)
+        self.assertEqual(len(scene.get_sections()), 0)
 
     def test_section_ordering(self):
         """ Sections maintain an ordering """
@@ -135,10 +138,10 @@ visible = false
     def test_add_ext_node(self):
         """ Test GDScene.add_ext_node """
         scene = GDScene()
-        res_id = scene.add_ext_resource("res://Other.tscn", "PackedScene")
-        node = scene.add_ext_node("Root", res_id)
+        res = scene.add_ext_resource("res://Other.tscn", "PackedScene")
+        node = scene.add_ext_node("Root", res.id)
         self.assertEqual(node.name, "Root")
-        self.assertEqual(node.instance, res_id)
+        self.assertEqual(node.instance, res.id)
 
     def test_write(self):
         """ Test writing scene out to a file """
@@ -170,6 +173,7 @@ visible = false
 
         s = scene.find_section(path="res://Res.tscn")
         scene.remove_section(s)
+        scene.renumber_resource_ids()
 
         s = scene.find_section("ext_resource")
         self.assertEqual(s.id, 1)
@@ -188,8 +192,9 @@ visible = false
         resource = GDResourceSection(shape=res2.reference)
         scene.add_section(resource)
 
-        s = scene.find_section(type="CircleShape2D")
+        s = scene.find_sub_resource(type="CircleShape2D")
         scene.remove_section(s)
+        scene.renumber_resource_ids()
 
         s = scene.find_section("sub_resource")
         self.assertEqual(s.id, 1)
@@ -209,3 +214,22 @@ visible = false
 
         found = list(scene.find_all("sub_resource", {"radius": 2}))
         self.assertEqual(found, [res2])
+
+    def test_find_node(self):
+        """ Test GDScene.find_node """
+        scene = GDScene()
+        n1 = scene.add_node("Root", "Node")
+        n2 = scene.add_node("Child", "Node", parent=".")
+        node = scene.find_node(name="Root")
+        self.assertEqual(node, n1)
+        node = scene.find_node(parent=".")
+        self.assertEqual(node, n2)
+
+    def test_file_equality(self):
+        """ Tests for GDFile == GDFile """
+        s1 = GDScene(GDResourceSection())
+        s2 = GDScene(GDResourceSection())
+        self.assertEqual(s1, s2)
+        resource = s1.find_section("resource")
+        resource["key"] = "value"
+        self.assertNotEqual(s1, s2)

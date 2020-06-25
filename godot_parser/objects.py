@@ -5,7 +5,15 @@ from typing import Type, TypeVar
 
 from .util import stringify_object
 
-__all__ = []
+__all__ = [
+    "GDObject",
+    "Vector2",
+    "Vector3",
+    "Color",
+    "NodePath",
+    "ExtResource",
+    "SubResource",
+]
 
 GD_OBJECT_REGISTRY = {}
 
@@ -21,7 +29,6 @@ class GDObjectMeta(type):
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
         GD_OBJECT_REGISTRY[name] = x
-        __all__.append(name)
         return x
 
 
