@@ -182,6 +182,14 @@ visible = false
         self.assertEqual(node["texture_map"]["tex"], s.reference)
         self.assertEqual(node["texture_pool"].args[0], s.reference)
 
+    def test_remove_unused_resource(self):
+        """ Can remove unused resources """
+        scene = GDScene()
+        res = scene.add_ext_resource("res://Res.tscn", "PackedScene")
+        scene.remove_unused_resources()
+        resources = scene.get_sections("ext_resource")
+        self.assertEqual(len(resources), 0)
+
     def test_addremove_sub_res(self):
         """ Test adding and removing a sub_resource """
         scene = GDResource()

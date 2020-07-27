@@ -43,3 +43,11 @@ def gdpath_to_filepath(root: str, path: str) -> str:
         raise ValueError("'%s' is not a godot resource path" % path)
     pieces = path[6:].split("/")
     return os.path.join(root, *pieces)
+
+
+def filepath_to_gdpath(root: str, path: str) -> str:
+    return "res://" + os.path.relpath(path, root).replace("\\", "/")
+
+
+def is_gd_path(path: str) -> bool:
+    return path.startswith("res://")

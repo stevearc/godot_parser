@@ -1,5 +1,16 @@
+import os
 from contextlib import contextmanager
-from typing import Iterable, List, Optional, Type, TypeVar, Union, cast
+from typing import (
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from .objects import ExtResource, GDObject, SubResource
 from .sections import (
@@ -10,7 +21,7 @@ from .sections import (
     GDSubResourceSection,
 )
 from .structure import scene_file
-from .util import find_project_root
+from .util import find_project_root, gdpath_to_filepath
 
 __all__ = ["GDFile", "GDScene", "GDResource"]
 
@@ -29,6 +40,10 @@ SCENE_ORDER = [
 
 
 GDFileType = TypeVar("GDFileType", bound="GDFile")
+
+
+class GodotFileException(Exception):
+    """ Thrown when there are errors in a Godot file """
 
 
 class GDFile(object):
@@ -198,6 +213,37 @@ class GDFile(object):
         self.add_section(node)
         return node
 
+    @property
+    def is_inherited(self) -> bool:
+        root = self.find_node(parent=None)
+        if root is None:
+            return False
+        return root.instance is not None
+
+    def get_parent_scene(self) -> Optional[str]:
+        root = self.find_node(parent=None)
+        if root is None or root.instance is None:
+            return None
+        parent_res = self.find_ext_resource(id=root.instance)
+        if parent_res is None:
+            return None
+        return parent_res.path
+
+    def load_parent_scene(self) -> "GDScene":
+        if self.project_root is None:
+            raise RuntimeError(
+                "load_parent_scene() requires a project_root on the GDFile"
+            )
+        root = self.find_node(parent=None)
+        if root is None or root.instance is None:
+            raise RuntimeError("Cannot load parent scene; scene is not inherited")
+        parent_res = self.find_ext_resource(id=root.instance)
+        if parent_res is None:
+            raise RuntimeError(
+                "Could not find parent scene resource id(%d)" % root.instance
+            )
+        return GDScene.load(gdpath_to_filepath(self.project_root, parent_res.path))
+
     @contextmanager
     def use_tree(self):
         """
@@ -265,6 +311,7 @@ class GDFile(object):
 
     def write(self, filename: str):
         """ Writes this to a file """
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "w") as ofile:
             ofile.write(str(self))
 
@@ -313,14 +360,54 @@ class GDCommonFile(GDFile):
         if section.header.name in ["ext_resource", "sub_resource"]:
             self.load_steps -= 1
 
+    def remove_unused_resources(self):
+        self._remove_unused_resources(self.get_ext_resources(), ExtResource)
+        self._remove_unused_resources(self.get_sub_resources(), SubResource)
+
+    def _remove_unused_resources(
+        self,
+        sections: Sequence[Union[GDExtResourceSection, GDSubResourceSection]],
+        reference_type: Type[Union[ExtResource, SubResource]],
+    ) -> None:
+        seen = set()
+        for ref in self._iter_node_resource_references():
+            if isinstance(ref, reference_type):
+                seen.add(ref.id)
+        if len(seen) < len(sections):
+            to_remove = [s for s in sections if s.id not in seen]
+            for s in to_remove:
+                self.remove_section(s)
+
     def renumber_resource_ids(self):
         """ Refactor all resource IDs to be sequential with no gaps """
         self._renumber_resource_ids(self.get_ext_resources(), ExtResource)
         self._renumber_resource_ids(self.get_sub_resources(), SubResource)
 
+    def _iter_node_resource_references(
+        self,
+    ) -> Iterator[Union[ExtResource, SubResource]]:
+        def iter_resources(value):
+            if isinstance(value, (ExtResource, SubResource)):
+                yield value
+            elif isinstance(value, list):
+                for v in value:
+                    yield from iter_resources(v)
+            elif isinstance(value, dict):
+                for v in value.values():
+                    yield from iter_resources(v)
+            elif isinstance(value, GDObject):
+                for v in value.args:
+                    yield from iter_resources(v)
+
+        for node in self.get_nodes():
+            yield from iter_resources(node.header.attributes)
+            yield from iter_resources(node.properties)
+        for resource in self.get_sections("resource"):
+            yield from iter_resources(resource.properties)
+
     def _renumber_resource_ids(
         self,
-        sections: List[Union[GDExtResourceSection, GDSubResourceSection]],
+        sections: Sequence[Union[GDExtResourceSection, GDSubResourceSection]],
         reference_type: Type[Union[ExtResource, SubResource]],
     ) -> None:
         id_map = {}
@@ -329,26 +416,13 @@ class GDCommonFile(GDFile):
             id_map[section.id] = i + 1
             section.id = i + 1
 
-        def replace(value):
-            if isinstance(value, reference_type):
-                value.id = id_map.get(value.id, value.id)
-            elif isinstance(value, list):
-                for v in value:
-                    replace(v)
-            elif isinstance(value, dict):
-                for v in value.values():
-                    replace(v)
-            elif isinstance(value, GDObject):
-                for v in value.args:
-                    replace(v)
-
-        # Now we recursively traverse all nodes and update the resource IDs to stay in
-        # sync with the renumbered resources
-        for node in self.get_nodes():
-            replace(node.header.attributes)
-            replace(node.properties)
-        for resource in self.get_sections("resource"):
-            replace(resource.properties)
+        # Now we update all references to use the new number
+        for ref in self._iter_node_resource_references():
+            if isinstance(ref, reference_type):
+                try:
+                    ref.id = id_map[ref.id]
+                except KeyError:
+                    raise GodotFileException("Unknown resource ID %d" % ref.id)
 
 
 class GDScene(GDCommonFile):

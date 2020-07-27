@@ -4,7 +4,6 @@ from typing import Any, List, Optional, Union
 
 from .files import GDFile
 from .sections import GDNodeSection
-from .util import gdpath_to_filepath
 
 __all__ = ["Node", "TreeMutationException"]
 SENTINEL = object()
@@ -323,18 +322,7 @@ class Tree(object):
 
 
 def _load_parent_scene(root: Node, file: GDFile):
-    if root.instance is None:
-        raise RuntimeError("This should only be called if root.instance is non-None")
-    if file.project_root is None:
-        raise RuntimeError(
-            "use_tree() with inherited scenes requires a project_root on the GDFile"
-        )
-    parent_res = file.find_ext_resource(id=root.instance)
-    if parent_res is None:
-        raise RuntimeError(
-            "Could not find parent scene resource id(%d)" % root.instance
-        )
-    parent_file = GDFile.load(gdpath_to_filepath(file.project_root, parent_res.path))
+    parent_file: GDFile = file.load_parent_scene()
     parent_tree = Tree.build(parent_file)
     # Transfer parent scene's children to this scene
     for child in parent_tree.root.get_children():
