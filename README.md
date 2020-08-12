@@ -34,7 +34,10 @@ example by creating a new scene file for a Player:
 ```
 
 It's much easier to use the high-level API when it's available, but it doesn't
-cover everything.
+cover everything. Note that `use_tree()` *does* support inherited scenes, and
+will generally function as expected (e.g. nodes on the parent scene will be
+available, and making edits will properly override fields in the child scene).
+There is no support yet for changing the inheritence of a scene.
 
 ## Low-level API
 Let's look at creating that same Player scene with the low-level API:
