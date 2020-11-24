@@ -1,5 +1,8 @@
 # Changelog
 
+## HEAD
+* Supports quoted keys in resources.
+
 ## 0.1.2
 * Better support for inherited scenes
 
