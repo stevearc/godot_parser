@@ -42,12 +42,14 @@ TEST_CASES = [
         """[sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 12.7855, 17.0634 )
 other = null
+"with spaces" = 1
     """,
         GDFile(
             GDSection(
                 GDSectionHeader("sub_resource", type="RectangleShape2D", id=1),
                 extents=Vector2(12.7855, 17.0634),
                 other=None,
+                **{"with spaces": 1}
             )
         ),
     ),
