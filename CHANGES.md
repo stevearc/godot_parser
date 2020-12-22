@@ -1,6 +1,7 @@
 # Changelog
 
 ## HEAD
+* Supports trailing commas in list definitions.
 * Supports quoted keys in resources.
 
 ## 0.1.2
