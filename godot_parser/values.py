@@ -43,8 +43,12 @@ obj_type = (
 
 # [ 1, 2 ] or [ 1, 2, ]
 list_ = (
-    Group(Suppress("[") + Optional(delimitedList(value))
-          + Optional(Suppress(",")) + Suppress("]"))
+    Group(
+        Suppress("[")
+        + Optional(delimitedList(value))
+        + Optional(Suppress(","))
+        + Suppress("]")
+    )
     .setName("list")
     .setParseAction(lambda p: p.asList())
 )
