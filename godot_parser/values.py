@@ -41,9 +41,10 @@ obj_type = (
     + Suppress(")")
 ).setParseAction(GDObject.from_parser)
 
-# [ 1, 2 ]
+# [ 1, 2 ] or [ 1, 2, ]
 list_ = (
-    Group(Suppress("[") + Optional(delimitedList(value)) + Suppress("]"))
+    Group(Suppress("[") + Optional(delimitedList(value))
+          + Optional(Suppress(",")) + Suppress("]"))
     .setName("list")
     .setParseAction(lambda p: p.asList())
 )
