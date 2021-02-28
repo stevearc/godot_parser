@@ -143,7 +143,7 @@ class GDFile(object):
             # Find the first Sprite
             scene.find_section('node', type='Sprite')
             # Find the first ext_resource that references Health.tscn
-            scene.find_section('ext_resourcee', path='Health.tscn')
+            scene.find_section('ext_resource', path='Health.tscn')
         """
         for section in self.find_all(
             section_name_, property_constraints=property_constraints, **constraints
