@@ -421,8 +421,8 @@ class GDCommonFile(GDFile):
             if isinstance(ref, reference_type):
                 try:
                     ref.id = id_map[ref.id]
-                except KeyError:
-                    raise GodotFileException("Unknown resource ID %d" % ref.id)
+                except KeyError as e:
+                    raise GodotFileException("Unknown resource ID %d" % ref.id) from e
 
 
 class GDScene(GDCommonFile):
