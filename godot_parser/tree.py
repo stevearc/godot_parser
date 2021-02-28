@@ -243,6 +243,7 @@ class Node(object):
 
         You can pass in a Node, the name of a Node, or the index of the child
         """
+        child = None
         if isinstance(node_or_name_or_index, str):
             for i, node in enumerate(self._children):
                 if node.name == node_or_name_or_index:
