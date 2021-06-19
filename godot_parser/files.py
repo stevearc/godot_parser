@@ -190,14 +190,14 @@ class GDFile(object):
         return section
 
     def add_node(
-        self, name: str, type: str = None, parent: str = None, index: int = None
+        self, name: str, type: str = None, parent: str = None, index: int = None, instance: int = None, groups: List[str] = None
     ) -> GDNodeSection:
         """
         Simple API for adding a node
 
         For a friendlier, tree-oriented API use use_tree()
         """
-        node = GDNodeSection(name, type=type, parent=parent, index=index)
+        node = GDNodeSection(name, type=type, parent=parent, index=index, instance=instance, groups=groups)
         self.add_section(node)
         return node
 

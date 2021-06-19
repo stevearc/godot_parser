@@ -31,6 +31,7 @@ class Node(object):
         type: str = None,
         instance: int = None,
         section: GDNodeSection = None,
+        groups: List[str] = None,
         properties: dict = None,
     ):
         self._name = name
@@ -39,6 +40,7 @@ class Node(object):
         self._parent = None
         self._index = None
         self.section = section or GDNodeSection(name)
+        self._groups = groups
         self.properties = (
             OrderedDict() if properties is None else OrderedDict(properties)
         )
@@ -178,6 +180,7 @@ class Node(object):
         self.section.type = self._type
         self.section.parent = path
         self.section.instance = self._instance
+        self.section.groups = self._groups
         self.section.properties = self.properties
         if self._index is not None:
             self.section.index = self._index
