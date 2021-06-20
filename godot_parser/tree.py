@@ -10,7 +10,7 @@ SENTINEL = object()
 
 
 class TreeMutationException(Exception):
-    """ Raised when attempting to mutate the tree in an unsupported way """
+    """Raised when attempting to mutate the tree in an unsupported way"""
 
 
 class Node(object):
@@ -137,7 +137,7 @@ class Node(object):
 
     @classmethod
     def from_section(cls, section: GDNodeSection):
-        """ Create a Node from a GDNodeSection """
+        """Create a Node from a GDNodeSection"""
         return cls(
             section.name,
             section.type,
@@ -194,11 +194,11 @@ class Node(object):
         return bool(self.properties)
 
     def get_children(self) -> List["Node"]:
-        """ Get all children of this node """
+        """Get all children of this node"""
         return self._children
 
     def get_child(self, name_or_index: Union[int, str]) -> Optional["Node"]:
-        """ Get a child by name or index """
+        """Get a child by name or index"""
         if isinstance(name_or_index, int):
             return self._children[name_or_index]
         for node in self._children:
@@ -207,7 +207,7 @@ class Node(object):
         return None
 
     def get_node(self, path: str) -> Optional["Node"]:
-        """ Mimics the Godot get_node() behavior """
+        """Mimics the Godot get_node() behavior"""
         if path in (".", ""):
             return self
         pieces = path.split("/")
@@ -217,17 +217,17 @@ class Node(object):
         return child.get_node("/".join(pieces[1:]))
 
     def add_child(self, node: "Node") -> None:
-        """ Add a child to the current node """
+        """Add a child to the current node"""
         self._children.append(node)
         node._parent = self
 
     def insert_child(self, index: int, node: "Node") -> None:
-        """ Add a child to the current node before the specified index """
+        """Add a child to the current node before the specified index"""
         self._children.insert(index, node)
         node._parent = self
 
     def _merge_child(self, section: GDNodeSection) -> None:
-        """ Add a child that may be an inherited node """
+        """Add a child that may be an inherited node"""
         for child in self._children:
             if child.name == section.name:
                 child.section = section
@@ -236,7 +236,7 @@ class Node(object):
         self.add_child(Node.from_section(section))
 
     def remove_from_parent(self) -> None:
-        """ Remove this node from its parent """
+        """Remove this node from its parent"""
         if self.parent is not None:
             self.parent.remove_child(self)
 
@@ -281,20 +281,20 @@ class Node(object):
 
 
 class Tree(object):
-    """ Container for the scene tree """
+    """Container for the scene tree"""
 
     def __init__(self, root: Optional[Node] = None):
         self.root = root
 
     def get_node(self, path: str) -> Optional[Node]:
-        """ Mimics the Godot get_node() behavior """
+        """Mimics the Godot get_node() behavior"""
         if self.root is None:
             return None
         return self.root.get_node(path)
 
     @classmethod
     def build(cls, file: GDFile):
-        """ Build the Tree from a flat list of [node]'s """
+        """Build the Tree from a flat list of [node]'s"""
         tree = cls()
         # Makes assumptions that the nodes are well-ordered
         for section in file.get_nodes():
@@ -314,7 +314,7 @@ class Tree(object):
         return tree
 
     def flatten(self) -> List[GDNodeSection]:
-        """ Flatten the tree back into a list of GDNodeSection """
+        """Flatten the tree back into a list of GDNodeSection"""
         ret: List[GDNodeSection] = []
         if self.root is None:
             return ret

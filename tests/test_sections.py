@@ -11,10 +11,10 @@ from godot_parser import (
 
 class TestGDSections(unittest.TestCase):
 
-    """ Tests for GD file sections """
+    """Tests for GD file sections"""
 
     def test_header_dunder(self):
-        """ Tests for __magic__ methods on GDSectionHeader """
+        """Tests for __magic__ methods on GDSectionHeader"""
         h = GDSectionHeader("node")
         self.assertEqual(str(h), "[node]")
         self.assertEqual(repr(h), "GDSectionHeader([node])")
@@ -25,7 +25,7 @@ class TestGDSections(unittest.TestCase):
         self.assertNotEqual(h, "[node]")
 
     def test_section_dunder(self):
-        """ Tests for __magic__ methods on GDSection """
+        """Tests for __magic__ methods on GDSection"""
         h = GDSectionHeader("node")
         s = GDSection(h, vframes=10)
         self.assertEqual(str(s), "[node]\nvframes = 10")
@@ -43,7 +43,7 @@ class TestGDSections(unittest.TestCase):
         del s["vframes"]
 
     def test_ext_resource(self):
-        """ Test for GDExtResourceSection """
+        """Test for GDExtResourceSection"""
         s = GDExtResourceSection("res://Other.tscn", type="PackedScene", id=1)
         self.assertEqual(s.path, "res://Other.tscn")
         self.assertEqual(s.type, "PackedScene")
@@ -56,7 +56,7 @@ class TestGDSections(unittest.TestCase):
         self.assertEqual(s.id, 2)
 
     def test_sub_resource(self):
-        """ Test for GDSubResourceSection """
+        """Test for GDSubResourceSection"""
         s = GDSubResourceSection(type="CircleShape2D", id=1)
         self.assertEqual(s.type, "CircleShape2D")
         self.assertEqual(s.id, 1)
@@ -66,7 +66,7 @@ class TestGDSections(unittest.TestCase):
         self.assertEqual(s.id, 2)
 
     def test_node(self):
-        """ Test for GDNodeSection """
+        """Test for GDNodeSection"""
         s = GDNodeSection("Sprite", type="Sprite")
         self.assertIsNone(s.instance)
         self.assertIsNone(s.index)

@@ -76,7 +76,7 @@ class GDSectionHeader(object):
 
 
 class GDSectionMeta(type):
-    """ Still trying to be too clever """
+    """Still trying to be too clever"""
 
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
@@ -156,7 +156,7 @@ class GDSection(metaclass=GDSectionMeta):
 
 
 class GDExtResourceSection(GDSection):
-    """ Section representing an [ext_resource] """
+    """Section representing an [ext_resource]"""
 
     def __init__(self, path: str, type: str, id: int):
         super().__init__(GDSectionHeader("ext_resource", path=path, type=type, id=id))
@@ -191,7 +191,7 @@ class GDExtResourceSection(GDSection):
 
 
 class GDSubResourceSection(GDSection):
-    """ Section representing a [sub_resource] """
+    """Section representing a [sub_resource]"""
 
     def __init__(self, type: str, id: int, **kwargs):
         super().__init__(GDSectionHeader("sub_resource", type=type, id=id), **kwargs)
@@ -218,7 +218,7 @@ class GDSubResourceSection(GDSection):
 
 
 class GDNodeSection(GDSection):
-    """ Section representing a [node] """
+    """Section representing a [node]"""
 
     def __init__(
         self,
@@ -308,7 +308,7 @@ class GDNodeSection(GDSection):
             del self.header["index"]
         else:
             self.header["index"] = str(index)
-    
+
     @property
     def groups(self) -> Optional[List[str]]:
         return self.header.get("groups")
@@ -319,10 +319,10 @@ class GDNodeSection(GDSection):
             del self.header["groups"]
         else:
             self.header["groups"] = groups
-    
+
 
 class GDResourceSection(GDSection):
-    """ Represents a [resource] section """
+    """Represents a [resource] section"""
 
     def __init__(self, **kwargs):
         super().__init__(GDSectionHeader("resource"), **kwargs)

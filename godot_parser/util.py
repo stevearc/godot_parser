@@ -4,7 +4,7 @@ from typing import Optional
 
 
 def stringify_object(value):
-    """ Serialize a value to the godot file format """
+    """Serialize a value to the godot file format"""
     if value is None:
         return "null"
     elif isinstance(value, str):

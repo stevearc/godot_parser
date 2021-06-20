@@ -39,7 +39,7 @@ def _parse_and_test_file(filename: str) -> bool:
 
 
 def main():
-    """ Test the parsing of one tscn file or all files in directory """
+    """Test the parsing of one tscn file or all files in directory"""
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument("file_or_dir", help="Parse file or files under this directory")
     args = parser.parse_args()

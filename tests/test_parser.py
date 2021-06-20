@@ -80,12 +80,17 @@ tracks/0/keys = {
         GDFile(GDSection(GDSectionHeader("resource"), **{"0/name": "Sand"})),
     ),
     (
-        """[node name="Label" parent="."]
+        """[node name="Label" parent="." groups=["foo", "bar"]]
 text = "Hello
 "
 """,
         GDFile(
-            GDSection(GDSectionHeader("node", name="Label", parent="."), text="Hello\n")
+            GDSection(
+                GDSectionHeader(
+                    "node", name="Label", parent=".", groups=["foo", "bar"]
+                ),
+                text="Hello\n",
+            )
         ),
     ),
 ]
@@ -93,10 +98,10 @@ text = "Hello
 
 class TestParser(unittest.TestCase):
 
-    """  """
+    """ """
 
     def _run_test(self, string: str, expected):
-        """ Run a set of tests """
+        """Run a set of tests"""
         try:
             parse_result = parse(string)
             if expected == "error":
@@ -119,6 +124,6 @@ class TestParser(unittest.TestCase):
             raise
 
     def test_cases(self):
-        """ Run the parsing test cases """
+        """Run the parsing test cases"""
         for string, expected in TEST_CASES:
             self._run_test(string, expected)
