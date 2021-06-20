@@ -67,10 +67,11 @@ class TestGDSections(unittest.TestCase):
 
     def test_node(self):
         """Test for GDNodeSection"""
-        s = GDNodeSection("Sprite", type="Sprite")
+        s = GDNodeSection("Sprite", type="Sprite", groups=["foo", "bar"])
         self.assertIsNone(s.instance)
         self.assertIsNone(s.index)
         self.assertEqual(s.type, "Sprite")
+        self.assertEqual(s.groups, ["foo", "bar"])
 
         # Setting the instance removes the type
         s.instance = 1
@@ -86,3 +87,7 @@ class TestGDSections(unittest.TestCase):
         self.assertEqual(s.index, 3)
         s.index = None
         self.assertEqual(s.index, None)
+
+        # Setting groups
+        s.groups = ["baz"]
+        self.assertEqual(s.groups, ["baz"])
