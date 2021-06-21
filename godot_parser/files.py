@@ -43,11 +43,11 @@ GDFileType = TypeVar("GDFileType", bound="GDFile")
 
 
 class GodotFileException(Exception):
-    """ Thrown when there are errors in a Godot file """
+    """Thrown when there are errors in a Godot file"""
 
 
 class GDFile(object):
-    """ Base class representing the contents of a Godot file """
+    """Base class representing the contents of a Godot file"""
 
     project_root: Optional[str] = None
 
@@ -55,7 +55,7 @@ class GDFile(object):
         self._sections = list(sections)
 
     def add_section(self, new_section: GDSection) -> int:
-        """ Add a section to the file and return the index of that section """
+        """Add a section to the file and return the index of that section"""
         new_idx = SCENE_ORDER.index(new_section.header.name)
         for i, section in enumerate(self._sections):
             idx = SCENE_ORDER.index(section.header.name)
@@ -66,7 +66,7 @@ class GDFile(object):
         return len(self._sections) - 1
 
     def remove_section(self, section: GDSection) -> bool:
-        """ Remove a section from the file """
+        """Remove a section from the file"""
         idx = -1
         for i, s in enumerate(self._sections):
             if section == s:
@@ -78,31 +78,31 @@ class GDFile(object):
         return True
 
     def remove_at(self, index: int) -> GDSection:
-        """ Remove a section at an index """
+        """Remove a section at an index"""
         return self._sections.pop(index)
 
     def get_sections(self, name: str = None) -> List[GDSection]:
-        """ Get all sections, or all sections of a given type """
+        """Get all sections, or all sections of a given type"""
         if name is None:
             return self._sections
         return [s for s in self._sections if s.header.name == name]
 
     def get_nodes(self) -> List[GDNodeSection]:
-        """ Get all [node] sections """
+        """Get all [node] sections"""
         return cast(List[GDNodeSection], self.get_sections("node"))
 
     def get_ext_resources(self) -> List[GDExtResourceSection]:
-        """ Get all [ext_resource] sections """
+        """Get all [ext_resource] sections"""
         return cast(List[GDExtResourceSection], self.get_sections("ext_resource"))
 
     def get_sub_resources(self) -> List[GDSubResourceSection]:
-        """ Get all [sub_resource] sections """
+        """Get all [sub_resource] sections"""
         return cast(List[GDSubResourceSection], self.get_sections("sub_resource"))
 
     def find_node(
         self, property_constraints: Optional[dict] = None, **constraints
     ) -> Optional[GDNodeSection]:
-        """ Find first [node] section that matches (see find_section) """
+        """Find first [node] section that matches (see find_section)"""
         return cast(
             GDNodeSection,
             self.find_section("node", property_constraints, **constraints),
@@ -111,7 +111,7 @@ class GDFile(object):
     def find_ext_resource(
         self, property_constraints: Optional[dict] = None, **constraints
     ) -> Optional[GDExtResourceSection]:
-        """ Find first [ext_resource] section that matches (see find_section) """
+        """Find first [ext_resource] section that matches (see find_section)"""
         return cast(
             GDExtResourceSection,
             self.find_section("ext_resource", property_constraints, **constraints),
@@ -120,7 +120,7 @@ class GDFile(object):
     def find_sub_resource(
         self, property_constraints: Optional[dict] = None, **constraints
     ) -> Optional[GDSubResourceSection]:
-        """ Find first [sub_resource] section that matches (see find_section) """
+        """Find first [sub_resource] section that matches (see find_section)"""
         return cast(
             GDSubResourceSection,
             self.find_section("sub_resource", property_constraints, **constraints),
@@ -157,7 +157,7 @@ class GDFile(object):
         property_constraints: Optional[dict] = None,
         **constraints
     ) -> Iterable[GDSection]:
-        """ Same as find_section, but returns all matches """
+        """Same as find_section, but returns all matches"""
         for section in self.get_sections(section_name_):
             found = True
             for k, v in constraints.items():
@@ -176,28 +176,41 @@ class GDFile(object):
                 yield section
 
     def add_ext_resource(self, path: str, type: str) -> GDExtResourceSection:
-        """ Add an ext_resource """
+        """Add an ext_resource"""
         next_id = 1 + max([s.id for s in self.get_ext_resources()] + [0])
         section = GDExtResourceSection(path, type, next_id)
         self.add_section(section)
         return section
 
     def add_sub_resource(self, type: str, **kwargs) -> GDSubResourceSection:
-        """ Add a sub_resource """
+        """Add a sub_resource"""
         next_id = 1 + max([s.id for s in self.get_sub_resources()] + [0])
         section = GDSubResourceSection(type, next_id, **kwargs)
         self.add_section(section)
         return section
 
     def add_node(
-        self, name: str, type: str = None, parent: str = None, index: int = None
+        self,
+        name: str,
+        type: str = None,
+        parent: str = None,
+        index: int = None,
+        instance: int = None,
+        groups: List[str] = None,
     ) -> GDNodeSection:
         """
         Simple API for adding a node
 
         For a friendlier, tree-oriented API use use_tree()
         """
-        node = GDNodeSection(name, type=type, parent=parent, index=index)
+        node = GDNodeSection(
+            name,
+            type=type,
+            parent=parent,
+            index=index,
+            instance=instance,
+            groups=groups,
+        )
         self.add_section(node)
         return node
 
@@ -277,7 +290,7 @@ class GDFile(object):
         self._sections[i + 1 : i + 1] = nodes[1:]
 
     def get_node(self, path: str = ".") -> Optional[GDNodeSection]:
-        """ Mimics the Godot get_node API """
+        """Mimics the Godot get_node API"""
         with self.use_tree() as tree:
             if tree.root is None:
                 return None
@@ -286,7 +299,7 @@ class GDFile(object):
 
     @classmethod
     def parse(cls: Type[GDFileType], contents: str) -> GDFileType:
-        """ Parse the contents of a Godot file """
+        """Parse the contents of a Godot file"""
         return cls.from_parser(scene_file.parseString(contents, parseAll=True))
 
     @classmethod
@@ -310,7 +323,7 @@ class GDFile(object):
         return cls(*parse_result)
 
     def write(self, filename: str):
-        """ Writes this to a file """
+        """Writes this to a file"""
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "w") as ofile:
             ofile.write(str(self))
@@ -331,7 +344,7 @@ class GDFile(object):
 
 
 class GDCommonFile(GDFile):
-    """ Base class with common application logic for all Godot file types """
+    """Base class with common application logic for all Godot file types"""
 
     def __init__(self, name: str, *sections: GDSection) -> None:
         super().__init__(
@@ -379,7 +392,7 @@ class GDCommonFile(GDFile):
                 self.remove_section(s)
 
     def renumber_resource_ids(self):
-        """ Refactor all resource IDs to be sequential with no gaps """
+        """Refactor all resource IDs to be sequential with no gaps"""
         self._renumber_resource_ids(self.get_ext_resources(), ExtResource)
         self._renumber_resource_ids(self.get_sub_resources(), SubResource)
 

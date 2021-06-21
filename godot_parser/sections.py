@@ -1,6 +1,6 @@
 import re
 from collections import OrderedDict
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, List, Optional, Type, TypeVar
 
 from .objects import ExtResource, SubResource
 from .util import stringify_object
@@ -76,7 +76,7 @@ class GDSectionHeader(object):
 
 
 class GDSectionMeta(type):
-    """ Still trying to be too clever """
+    """Still trying to be too clever"""
 
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
@@ -156,7 +156,7 @@ class GDSection(metaclass=GDSectionMeta):
 
 
 class GDExtResourceSection(GDSection):
-    """ Section representing an [ext_resource] """
+    """Section representing an [ext_resource]"""
 
     def __init__(self, path: str, type: str, id: int):
         super().__init__(GDSectionHeader("ext_resource", path=path, type=type, id=id))
@@ -191,7 +191,7 @@ class GDExtResourceSection(GDSection):
 
 
 class GDSubResourceSection(GDSection):
-    """ Section representing a [sub_resource] """
+    """Section representing a [sub_resource]"""
 
     def __init__(self, type: str, id: int, **kwargs):
         super().__init__(GDSectionHeader("sub_resource", type=type, id=id), **kwargs)
@@ -218,7 +218,7 @@ class GDSubResourceSection(GDSection):
 
 
 class GDNodeSection(GDSection):
-    """ Section representing a [node] """
+    """Section representing a [node]"""
 
     def __init__(
         self,
@@ -227,7 +227,8 @@ class GDNodeSection(GDSection):
         parent: str = None,
         instance: int = None,
         index: int = None,
-        # TODO: instance_placeholder, owner, groups are referenced in the docs, but I
+        groups: List[str] = None,
+        # TODO: instance_placeholder, owner are referenced in the docs, but I
         # haven't seen them come up yet in my project
     ):
         kwargs = {
@@ -236,6 +237,7 @@ class GDNodeSection(GDSection):
             "parent": parent,
             "instance": ExtResource(instance) if instance is not None else None,
             "index": str(index) if index is not None else None,
+            "groups": groups,
         }
         super().__init__(
             GDSectionHeader(
@@ -307,9 +309,20 @@ class GDNodeSection(GDSection):
         else:
             self.header["index"] = str(index)
 
+    @property
+    def groups(self) -> Optional[List[str]]:
+        return self.header.get("groups")
+
+    @groups.setter
+    def groups(self, groups: Optional[List[str]]) -> None:
+        if groups is None:
+            del self.header["groups"]
+        else:
+            self.header["groups"] = groups
+
 
 class GDResourceSection(GDSection):
-    """ Represents a [resource] section """
+    """Represents a [resource] section"""
 
     def __init__(self, **kwargs):
         super().__init__(GDSectionHeader("resource"), **kwargs)
