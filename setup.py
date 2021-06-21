@@ -1,6 +1,5 @@
 """ Setup file """
 import os
-import re
 
 from setuptools import find_packages, setup
 

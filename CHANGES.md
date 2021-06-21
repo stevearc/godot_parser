@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4
+* Supports node groups [#5](https://github.com/stevearc/godot_parser/pull/5)
+
 ## 0.1.3
 * Supports trailing commas in list definitions.
 * Supports quoted keys in resources.
