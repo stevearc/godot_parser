@@ -305,7 +305,10 @@ class GDFile(object):
     @classmethod
     def load(cls: Type[GDFileType], filepath: str) -> GDFileType:
         with open(filepath, "r") as ifile:
-            file = cls.parse(ifile.read())
+            try:
+                file = cls.parse(ifile.read())
+            except UnicodeDecodeError:
+                raise NotImplementedError("Error loading %s: godot_parser does not support binary scenes" % filepath)
         file.project_root = find_project_root(filepath)
         return file
 
