@@ -4,7 +4,7 @@ import os
 import sys
 from itertools import zip_longest
 
-from godot_parser import parse
+from godot_parser import load, parse
 
 
 def _parse_and_test_file(filename: str) -> bool:
@@ -19,6 +19,11 @@ def _parse_and_test_file(filename: str) -> bool:
 
         traceback.print_exc()
         return False
+
+    f = load(filename)
+    with f.use_tree() as tree:
+        pass
+
     data_lines = [l for l in str(data).split("\n") if l]
     content_lines = [l for l in contents.split("\n") if l]
     if data_lines != content_lines:
