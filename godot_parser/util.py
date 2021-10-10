@@ -1,4 +1,5 @@
 """ Utils """
+import json
 import os
 from typing import Optional
 
@@ -8,7 +9,7 @@ def stringify_object(value):
     if value is None:
         return "null"
     elif isinstance(value, str):
-        return '"' + value + '"'
+        return json.dumps(value)
     elif isinstance(value, bool):
         return "true" if value else "false"
     elif isinstance(value, dict):

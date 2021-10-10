@@ -20,6 +20,7 @@ class TestGDFile(unittest.TestCase):
                 list=[1, 2.0, "string"],
                 map={"key": ["nested", GDObject("Vector2", 1, 1)]},
                 empty=None,
+                escaped='foo("bar")',
             )
         )
         self.assertEqual(
@@ -32,6 +33,7 @@ map = {
 "key": [ "nested", Vector2( 1, 1 ) ]
 }
 empty = null
+escaped = "foo(\\"bar\\")"
 """,
         )
 
