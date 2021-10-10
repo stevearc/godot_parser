@@ -308,7 +308,10 @@ class GDFile(object):
             try:
                 file = cls.parse(ifile.read())
             except UnicodeDecodeError:
-                raise NotImplementedError("Error loading %s: godot_parser does not support binary scenes" % filepath)
+                raise NotImplementedError(  # pylint: disable=W0707
+                    "Error loading %s: godot_parser does not support binary scenes"
+                    % filepath
+                )
         file.project_root = find_project_root(filepath)
         return file
 
