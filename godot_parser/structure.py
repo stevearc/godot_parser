@@ -3,13 +3,13 @@
 from pyparsing import (
     Empty,
     Group,
+    LineEnd,
     Optional,
     QuotedString,
     Suppress,
     Word,
     alphanums,
-    delimitedList,
-    lineStart,
+    delimited_list,
 )
 
 from .sections import GDSection, GDSectionHeader
@@ -24,21 +24,21 @@ attribute = Group(var + Suppress("=") + value)
 # [node name="Node2D"]
 section_header = (
     (
-        Suppress(lineStart)
-        + Suppress("[")
+        Suppress("[")
         + var.setResultsName("section_type")
-        + Optional(delimitedList(attribute, Empty()))
+        + Optional(delimited_list(attribute, Empty()))
         + Suppress("]")
+        + Suppress(LineEnd())
     )
     .setName("section_header")
     .setParseAction(GDSectionHeader.from_parser)
 )
 
 # texture = ExtResource( 1 )
-section_entry = Group(Suppress(lineStart) + key + Suppress("=") + value).setName(
+section_entry = Group(key + Suppress("=") + value + Suppress(LineEnd())).setName(
     "section_entry"
 )
-section_contents = delimitedList(section_entry, Empty()).setName("section_contents")
+section_contents = delimited_list(section_entry, Empty()).setName("section_contents")
 
 # [node name="Sprite" type="Sprite"]
 # texture = ExtResource( 1 )
@@ -50,4 +50,4 @@ section = (
 
 # Exports
 
-scene_file = delimitedList(section, Empty())
+scene_file = delimited_list(section, Empty())

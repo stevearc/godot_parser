@@ -28,7 +28,7 @@ TEST_CASES = [
     ),
     (
         """[gd_scene load_steps=5 format=2]
-[ext_resource path="res://Sample.tscn" type="PackedScene" id=1]""",
+    [ext_resource path="res://Sample.tscn" type="PackedScene" id=1]""",
         GDFile(
             GDSection(GDSectionHeader("gd_scene", load_steps=5, format=2)),
             GDSection(
@@ -40,10 +40,10 @@ TEST_CASES = [
     ),
     (
         """[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 12.7855, 17.0634 )
-other = null
-"with spaces" = 1
-    """,
+        extents = Vector2( 12.7855, 17.0634 )
+        other = null
+        "with spaces" = 1
+            """,
         GDFile(
             GDSection(
                 GDSectionHeader("sub_resource", type="RectangleShape2D", id=1),
@@ -55,11 +55,11 @@ other = null
     ),
     (
         """[sub_resource type="Animation" id=2]
-tracks/0/keys = {
-"transitions": PoolRealArray( 1, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 0 ), Vector2( 1, 0 ) ]
-}""",
+    tracks/0/keys = {
+    "transitions": PoolRealArray( 1, 1 ),
+    "update": 0,
+    "values": [ Vector2( 0, 0 ), Vector2( 1, 0 ) ]
+    }""",
         GDFile(
             GDSection(
                 GDSectionHeader("sub_resource", type="Animation", id=2),
@@ -75,21 +75,21 @@ tracks/0/keys = {
     ),
     (
         """[resource]
-0/name = "Sand"
-    """,
+    0/name = "Sand"
+        """,
         GDFile(GDSection(GDSectionHeader("resource"), **{"0/name": "Sand"})),
     ),
     (
         """[node name="Label" parent="." groups=["foo", "bar"]]
-text = "Hello
-"
-""",
+    text = "Hello
+    "
+    """,
         GDFile(
             GDSection(
                 GDSectionHeader(
                     "node", name="Label", parent=".", groups=["foo", "bar"]
                 ),
-                text="Hello\n",
+                text="Hello\n    ",
             )
         ),
     ),
