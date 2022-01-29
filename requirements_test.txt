@@ -1,6 +1,4 @@
 black
-docutils
 isort
 mypy
-nose
 pylint==2.7.1

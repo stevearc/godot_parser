@@ -69,7 +69,6 @@ class TestTree(unittest.TestCase):
         child2 = scene.find_section("node", name="Child2")
         idx1 = scene.get_sections().index(child1)
         idx2 = scene.get_sections().index(child2)
-        print(scene.get_sections())
         self.assertLess(idx2, idx1)
 
     def test_empty_scene(self):
