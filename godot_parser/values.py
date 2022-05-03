@@ -4,7 +4,7 @@ from pyparsing import (
     Forward,
     Group,
     Keyword,
-    Optional,
+    Opt,
     QuotedString,
     Suppress,
     Word,
@@ -44,10 +44,7 @@ obj_type = (
 # [ 1, 2 ] or [ 1, 2, ]
 list_ = (
     Group(
-        Suppress("[")
-        + Optional(delimitedList(value))
-        + Optional(Suppress(","))
-        + Suppress("]")
+        Suppress("[") + Opt(delimitedList(value)) + Opt(Suppress(",")) + Suppress("]")
     )
     .setName("list")
     .setParseAction(lambda p: p.asList())
@@ -58,7 +55,7 @@ key_val = Group(QuotedString('"', escChar="\\") + Suppress(":") + value)
 # "_edit_use_anchors_": false
 # }
 dict_ = (
-    (Suppress("{") + Optional(delimitedList(key_val)) + Suppress("}"))
+    (Suppress("{") + Opt(delimitedList(key_val)) + Suppress("}"))
     .setName("dict")
     .setParseAction(lambda d: {k: v for k, v in d})
 )

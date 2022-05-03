@@ -4,7 +4,7 @@ from pyparsing import (
     Empty,
     Group,
     LineEnd,
-    Optional,
+    Opt,
     QuotedString,
     Suppress,
     Word,
@@ -26,7 +26,7 @@ section_header = (
     (
         Suppress("[")
         + var.setResultsName("section_type")
-        + Optional(delimited_list(attribute, Empty()))
+        + Opt(delimited_list(attribute, Empty()))
         + Suppress("]")
         + Suppress(LineEnd())
     )
@@ -43,7 +43,7 @@ section_contents = delimited_list(section_entry, Empty()).setName("section_conte
 # [node name="Sprite" type="Sprite"]
 # texture = ExtResource( 1 )
 section = (
-    (section_header + Optional(section_contents))
+    (section_header + Opt(section_contents))
     .setName("section")
     .setParseAction(GDSection.from_parser)
 )
