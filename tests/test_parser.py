@@ -93,6 +93,23 @@ TEST_CASES = [
             )
         ),
     ),
+    (
+        """[sub_resource type="TileSetAtlasSource" id=2]
+    0:0/0 = 0
+    0:0/0/physics_layer_0/linear_velocity = Vector2(0, 0)
+    0:0/0/physics_layer_0/angular_velocity = 0.0
+    """,
+        GDFile(
+            GDSection(
+                GDSectionHeader("sub_resource", type="TileSetAtlasSource", id=2),
+                **{
+                    "0:0/0": 0,
+                    "0:0/0/physics_layer_0/linear_velocity": Vector2(0, 0),
+                    "0:0/0/physics_layer_0/angular_velocity": 0.0,
+                }
+            )
+        ),
+    ),
 ]
 
 

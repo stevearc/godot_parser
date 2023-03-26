@@ -16,7 +16,7 @@ from .sections import GDSection, GDSectionHeader
 from .values import value
 
 key = QuotedString('"', escChar="\\", multiline=False).setName("key") | Word(
-    alphanums + "_/"
+    alphanums + "_/:"
 ).setName("key")
 var = Word(alphanums + "_").setName("variable")
 attribute = Group(var + Suppress("=") + value)
