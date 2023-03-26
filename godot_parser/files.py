@@ -81,7 +81,7 @@ class GDFile(object):
         """Remove a section at an index"""
         return self._sections.pop(index)
 
-    def get_sections(self, name: str = None) -> List[GDSection]:
+    def get_sections(self, name: Optional[str] = None) -> List[GDSection]:
         """Get all sections, or all sections of a given type"""
         if name is None:
             return self._sections
@@ -128,7 +128,7 @@ class GDFile(object):
 
     def find_section(
         self,
-        section_name_: str = None,
+        section_name_: Optional[str] = None,
         property_constraints: Optional[dict] = None,
         **constraints
     ) -> Optional[GDSection]:
@@ -153,7 +153,7 @@ class GDFile(object):
 
     def find_all(
         self,
-        section_name_: str = None,
+        section_name_: Optional[str] = None,
         property_constraints: Optional[dict] = None,
         **constraints
     ) -> Iterable[GDSection]:
@@ -192,11 +192,11 @@ class GDFile(object):
     def add_node(
         self,
         name: str,
-        type: str = None,
-        parent: str = None,
-        index: int = None,
-        instance: int = None,
-        groups: List[str] = None,
+        type: Optional[str] = None,
+        parent: Optional[str] = None,
+        index: Optional[int] = None,
+        instance: Optional[int] = None,
+        groups: Optional[List[str]] = None,
     ) -> GDNodeSection:
         """
         Simple API for adding a node
@@ -215,7 +215,11 @@ class GDFile(object):
         return node
 
     def add_ext_node(
-        self, name: str, instance: int, parent: str = None, index: int = None
+        self,
+        name: str,
+        instance: int,
+        parent: Optional[str] = None,
+        index: Optional[int] = None,
     ) -> GDNodeSection:
         """
         Simple API for adding a node that instances an ext_resource

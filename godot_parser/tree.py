@@ -28,11 +28,11 @@ class Node(object):
     def __init__(
         self,
         name: str,
-        type: str = None,
-        instance: int = None,
-        section: GDNodeSection = None,
-        groups: List[str] = None,
-        properties: dict = None,
+        type: Optional[str] = None,
+        instance: Optional[int] = None,
+        section: Optional[GDNodeSection] = None,
+        groups: Optional[List[str]] = None,
+        properties: Optional[dict] = None,
     ):
         self._name = name
         self._type = type
@@ -146,7 +146,7 @@ class Node(object):
             properties=section.properties,
         )
 
-    def flatten(self, path: str = None):
+    def flatten(self, path: Optional[str] = None):
         """
         Write values to GDNodeSection and iterate over children
 
@@ -175,7 +175,7 @@ class Node(object):
                 child_idx += 1
             yield from child.flatten(child_path)
 
-    def _update_section(self, path: str = None) -> None:
+    def _update_section(self, path: Optional[str] = None) -> None:
         self.section.name = self.name
         self.section.type = self._type
         self.section.parent = path

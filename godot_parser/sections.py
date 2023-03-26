@@ -223,11 +223,11 @@ class GDNodeSection(GDSection):
     def __init__(
         self,
         name: str,
-        type: str = None,
-        parent: str = None,
-        instance: int = None,
-        index: int = None,
-        groups: List[str] = None,
+        type: Optional[str] = None,
+        parent: Optional[str] = None,
+        instance: Optional[int] = None,
+        index: Optional[int] = None,
+        groups: Optional[List[str]] = None,
         # TODO: instance_placeholder, owner are referenced in the docs, but I
         # haven't seen them come up yet in my project
     ):
@@ -246,7 +246,13 @@ class GDNodeSection(GDSection):
         )
 
     @classmethod
-    def ext_node(cls, name: str, instance: int, parent: str = None, index: int = None):
+    def ext_node(
+        cls,
+        name: str,
+        instance: int,
+        parent: Optional[str] = None,
+        index: Optional[int] = None,
+    ):
         return cls(name, parent=parent, instance=instance, index=index)
 
     @property
