@@ -150,7 +150,7 @@ visible = false
         scene = GDScene()
         outfile = tempfile.mkstemp()[1]
         scene.write(outfile)
-        with open(outfile, "r") as ifile:
+        with open(outfile, "r", encoding="utf-8") as ifile:
             gen_scene = GDScene.parse(ifile.read())
         self.assertEqual(scene, gen_scene)
 

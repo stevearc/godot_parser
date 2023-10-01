@@ -1,6 +1,7 @@
 """ The grammar of low-level values in the GD file format """
 
 from pyparsing import (
+    DelimitedList,
     Forward,
     Group,
     Keyword,
@@ -10,44 +11,40 @@ from pyparsing import (
     Word,
     alphanums,
     alphas,
-    delimitedList,
-    pyparsing_common,
+    common,
 )
 
 from .objects import GDObject
 
 boolean = (
     (Keyword("true") | Keyword("false"))
-    .setName("bool")
-    .setParseAction(lambda x: x[0].lower() == "true")
+    .set_name("bool")
+    .set_parse_action(lambda x: x[0].lower() == "true")
 )
 
-null = Keyword("null").setParseAction(lambda _: [None])
+null = Keyword("null").set_parse_action(lambda _: [None])
 
 
 primitive = (
-    null
-    | QuotedString('"', escChar="\\", multiline=True)
-    | boolean
-    | pyparsing_common.number
+    null | QuotedString('"', escChar="\\", multiline=True) | boolean | common.number
 )
 value = Forward()
 
 # Vector2( 1, 2 )
 obj_type = (
-    Word(alphas, alphanums).setResultsName("object_name")
+    Word(alphas, alphanums).set_results_name("object_name")
     + Suppress("(")
-    + delimitedList(value)
+    + DelimitedList(value)
     + Suppress(")")
-).setParseAction(GDObject.from_parser)
+).set_parse_action(GDObject.from_parser)
 
 # [ 1, 2 ] or [ 1, 2, ]
 list_ = (
     Group(
-        Suppress("[") + Opt(delimitedList(value)) + Opt(Suppress(",")) + Suppress("]")
+        Suppress("[") + Opt(DelimitedList(value)) + Opt(Suppress(",")) + Suppress("]")
     )
-    .setName("list")
-    .setParseAction(lambda p: p.asList())
+    .set_name("list")
+    .set_parse_action(lambda p: p.as_list())
 )
 key_val = Group(QuotedString('"', escChar="\\") + Suppress(":") + value)
 
@@ -55,9 +52,9 @@ key_val = Group(QuotedString('"', escChar="\\") + Suppress(":") + value)
 # "_edit_use_anchors_": false
 # }
 dict_ = (
-    (Suppress("{") + Opt(delimitedList(key_val)) + Suppress("}"))
-    .setName("dict")
-    .setParseAction(lambda d: {k: v for k, v in d})
+    (Suppress("{") + Opt(DelimitedList(key_val)) + Suppress("}"))
+    .set_name("dict")
+    .set_parse_action(lambda d: {k: v for k, v in d})
 )
 
 # Exports

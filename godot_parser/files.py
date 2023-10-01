@@ -304,11 +304,11 @@ class GDFile(object):
     @classmethod
     def parse(cls: Type[GDFileType], contents: str) -> GDFileType:
         """Parse the contents of a Godot file"""
-        return cls.from_parser(scene_file.parseString(contents, parseAll=True))
+        return cls.from_parser(scene_file.parse_string(contents, parseAll=True))
 
     @classmethod
     def load(cls: Type[GDFileType], filepath: str) -> GDFileType:
-        with open(filepath, "r") as ifile:
+        with open(filepath, "r", encoding="utf-8") as ifile:
             try:
                 file = cls.parse(ifile.read())
             except UnicodeDecodeError:
@@ -335,7 +335,7 @@ class GDFile(object):
     def write(self, filename: str):
         """Writes this to a file"""
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, "w") as ofile:
+        with open(filename, "w", encoding="utf-8") as ofile:
             ofile.write(str(self))
 
     def __str__(self) -> str:
