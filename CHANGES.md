@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+
+- Add py.typed file to provide type information [\#8](https://github.com/stevearc/godot_parser/issues/8), [\#10](https://github.com/stevearc/godot_parser/issues/10)
+- Allow colon in key names [\#9](https://github.com/stevearc/godot_parser/issues/9)
+- Drop support for python 3.6
+
 ## 0.1.6
 
 - Fix errors when using new version of pyparsing
