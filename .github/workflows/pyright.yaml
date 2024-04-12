@@ -1,0 +1,38 @@
+name: Simple Pyright Action
+
+on:
+  pull_request:
+    paths:
+      - "**.py"
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-types:
+    name: pyright
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Pyright
+        uses: YajJackson/simple-pyright-action@v1.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          include-base-comparison: true
