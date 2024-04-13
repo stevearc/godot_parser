@@ -30,6 +30,7 @@ class TestTree(unittest.TestCase):
 
         # Remove by name
         with scene.use_tree() as tree:
+            assert tree.root is not None, "Tree should have root node"
             tree.root.remove_child("Child")
         node = scene.find_section("node", name="Child")
         self.assertIsNone(node)
@@ -37,6 +38,7 @@ class TestTree(unittest.TestCase):
         # Remove by index
         scene.add_node("Child", parent=".")
         with scene.use_tree() as tree:
+            assert tree.root is not None, "Tree should have root node"
             tree.root.remove_child(0)
         node = scene.find_section("node", name="Child")
         self.assertIsNone(node)
@@ -44,6 +46,7 @@ class TestTree(unittest.TestCase):
         # Remove by reference
         scene.add_node("Child", parent=".")
         with scene.use_tree() as tree:
+            assert tree.root is not None, "Tree should have root node"
             node = tree.root.get_children()[0]
             tree.root.remove_child(node)
         node = scene.find_section("node", name="Child")
@@ -52,6 +55,7 @@ class TestTree(unittest.TestCase):
         # Remove child
         scene.add_node("Child", parent=".")
         with scene.use_tree() as tree:
+            assert tree.root is not None, "Tree should have root node"
             node = tree.root.get_child(0)
             node.remove_from_parent()
         node = scene.find_section("node", name="Child")
@@ -64,6 +68,7 @@ class TestTree(unittest.TestCase):
         scene.add_node("Child1", parent=".")
         with scene.use_tree() as tree:
             child = Node("Child2", type="Node")
+            assert tree.root is not None, "Tree should have root node"
             tree.root.insert_child(0, child)
         child1 = scene.find_section("node", name="Child1")
         child2 = scene.find_section("node", name="Child2")
@@ -90,6 +95,7 @@ class TestTree(unittest.TestCase):
         scene = GDScene()
         scene.add_node("RootNode")
         with scene.use_tree() as tree:
+            assert tree.root is not None, "Tree should have root node"
             tree.root["vframes"] = 10
             self.assertEqual(tree.root["vframes"], 10)
             tree.root["hframes"] = 10
@@ -110,10 +116,10 @@ class TestInheritedScenes(unittest.TestCase):
 
     """Test the the high-level tree API for inherited scenes"""
 
-    project_dir = None
-    root_scene = None
-    mid_scene = None
-    leaf_scene = None
+    project_dir: str
+    root_scene: str
+    mid_scene: str
+    leaf_scene: str
 
     @classmethod
     def setUpClass(cls):
@@ -177,7 +183,7 @@ flip_h = true
         scene = GDScene.load(self.leaf_scene)
         with scene.use_tree() as tree:
             node = tree.get_node("Health/LifeBar")
-            self.assertIsNotNone(node)
+            assert node is not None, "Should find LifeBar node"
             self.assertEqual(node.type, "TextureProgress")
 
     def test_add_new_nodes(self):
@@ -186,6 +192,7 @@ flip_h = true
         with scene.use_tree() as tree:
             tree.get_node("Health/LifeBar")
             node = Node("NewChild", type="Control")
+            assert tree.root is not None, "Tree should have root node"
             tree.root.add_child(node)
             # Non-inherited node can change name, type, instance
             node.instance = 2
@@ -193,6 +200,7 @@ flip_h = true
             node.name = "NewChild2"
         found = scene.find_section("node", name="NewChild2")
         self.assertIsNotNone(found)
+        assert found is not None, "Should find NewChild2 node"
         self.assertEqual(found.type, "Node2D")
         self.assertEqual(found.parent, ".")
         self.assertEqual(found.index, 3)

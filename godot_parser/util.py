@@ -1,4 +1,5 @@
 """ Utils """
+
 import json
 import os
 from typing import Optional
@@ -52,3 +53,11 @@ def filepath_to_gdpath(root: str, path: str) -> str:
 
 def is_gd_path(path: str) -> bool:
     return path.startswith("res://")
+
+
+def generate_id():
+    if "counter" not in generate_id.__dict__:
+        generate_id.counter = 0
+
+    generate_id.counter += 1
+    return generate_id.counter

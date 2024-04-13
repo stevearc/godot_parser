@@ -1,9 +1,11 @@
 import re
 from collections import OrderedDict
-from typing import Any, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar
+from dataclasses import dataclass, field
+
 
 from .objects import ExtResource, SubResource
-from .util import stringify_object
+from .util import generate_id, stringify_object
 
 __all__ = [
     "GDSectionHeader",
@@ -14,11 +16,13 @@ __all__ = [
     "GDResourceSection",
 ]
 
+GDSectionType = TypeVar("GDSectionType", bound="GDSection")
 
 GD_SECTION_REGISTRY = {}
 
 
-class GDSectionHeader(object):
+@dataclass
+class GDSectionHeader:
     """
     Represents the header for a section
 
@@ -27,11 +31,11 @@ class GDSectionHeader(object):
         [node name="Sprite" type="Sprite" index="3"]
     """
 
-    def __init__(self, _name: str, **kwargs) -> None:
-        self.name = _name
-        self.attributes = OrderedDict()
-        for k, v in kwargs.items():
-            self.attributes[k] = v
+    name: str
+    id: int = field(default_factory=generate_id)
+    path: str = field(default="")
+    type: str = field(default="node")
+    attributes: OrderedDict[str, Any] = field(default_factory=OrderedDict)
 
     def __getitem__(self, k: str) -> Any:
         return self.attributes[k]
@@ -49,8 +53,14 @@ class GDSectionHeader(object):
         return self.attributes.get(k, default)
 
     @classmethod
-    def from_parser(cls: Type["GDSectionHeader"], parse_result) -> "GDSectionHeader":
-        header = cls(parse_result[0])
+    def from_parser(cls, parse_result) -> "GDSectionHeader":
+        print(f"DEBUG | parse_result: {parse_result}")
+        header = cls(
+            id=parse_result[0],
+            name=parse_result[0],
+            path=parse_result[0],
+            type=parse_result[0],
+        )
         for attribute in parse_result[1:]:
             header.attributes[attribute[0]] = attribute[1]
         return header
@@ -59,12 +69,15 @@ class GDSectionHeader(object):
         attribute_str = ""
         if self.attributes:
             attribute_str = " " + " ".join(
-                ["%s=%s" % (k, stringify_object(v)) for k, v in self.attributes.items()]
+                [
+                    "{}={}".format(k, stringify_object(v))
+                    for k, v in self.attributes.items()
+                ]
             )
         return "[" + self.name + attribute_str + "]"
 
     def __repr__(self) -> str:
-        return "GDSectionHeader(%s)" % self.__str__()
+        return f"GDSectionHeader({self})"
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, GDSectionHeader):
@@ -75,36 +88,16 @@ class GDSectionHeader(object):
         return not self.__eq__(other)
 
 
-class GDSectionMeta(type):
-    """Still trying to be too clever"""
+@dataclass
+class GDSection:
+    header: Any
+    properties: OrderedDict = field(default_factory=OrderedDict)
 
-    def __new__(cls, name, bases, dct):
-        x = super().__new__(cls, name, bases, dct)
-        section_name_camel = name[2:-7]
+    def __post_init__(self):
+        # Dynamic registration logic moved to __post_init__
+        section_name_camel = self.__class__.__name__[2:-7]
         section_name = re.sub(r"(?<!^)(?=[A-Z])", "_", section_name_camel).lower()
-        GD_SECTION_REGISTRY[section_name] = x
-        return x
-
-
-GDSectionType = TypeVar("GDSectionType", bound="GDSection")
-
-
-class GDSection(metaclass=GDSectionMeta):
-    """
-    Represents a full section of a GD file
-
-    example::
-
-        [node name="Sprite" type="Sprite"]
-        texture = ExtResource( 1 )
-
-    """
-
-    def __init__(self, header: GDSectionHeader, **kwargs) -> None:
-        self.header = header
-        self.properties = OrderedDict()
-        for k, v in kwargs.items():
-            self.properties[k] = v
+        GD_SECTION_REGISTRY[section_name] = self.__class__
 
     def __getitem__(self, k: str) -> Any:
         return self.properties[k]
@@ -122,26 +115,13 @@ class GDSection(metaclass=GDSectionMeta):
         return self.properties.get(k, default)
 
     @classmethod
-    def from_parser(cls: Type[GDSectionType], parse_result) -> GDSectionType:
+    def from_parser(cls: Type["GDSection"], parse_result) -> "GDSection":
         header = parse_result[0]
         factory = GD_SECTION_REGISTRY.get(header.name, cls)
-        section = factory.__new__(factory)
-        section.header = header
-        section.properties = OrderedDict()
+        section = factory(header=header)
         for k, v in parse_result[1:]:
             section[k] = v
         return section
-
-    def __str__(self) -> str:
-        ret = str(self.header)
-        if self.properties:
-            ret += "\n" + "\n".join(
-                [
-                    "%s = %s" % (k, stringify_object(v))
-                    for k, v in self.properties.items()
-                ]
-            )
-        return ret
 
     def __repr__(self) -> str:
         return "%s(%s)" % (type(self).__name__, self.__str__())
@@ -159,7 +139,9 @@ class GDExtResourceSection(GDSection):
     """Section representing an [ext_resource]"""
 
     def __init__(self, path: str, type: str, id: int):
-        super().__init__(GDSectionHeader("ext_resource", path=path, type=type, id=id))
+        super().__init__(
+            GDSectionHeader(name="ext_resource", path=path, type=type, id=id)
+        )
 
     @property
     def path(self) -> str:
