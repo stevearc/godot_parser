@@ -1,4 +1,4 @@
-""" Wrappers for Godot's non-primitive object types """
+"""Wrappers for Godot's non-primitive object types"""
 
 from functools import partial
 from typing import Type, TypeVar

@@ -114,7 +114,6 @@ TEST_CASES = [
 
 
 class TestParser(unittest.TestCase):
-
     """ """
 
     def _run_test(self, string: str, expected):

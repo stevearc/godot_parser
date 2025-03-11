@@ -1,4 +1,4 @@
-""" The grammar of the larger structures in the GD file format """
+"""The grammar of the larger structures in the GD file format"""
 
 from pyparsing import (
     DelimitedList,

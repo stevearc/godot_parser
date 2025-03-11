@@ -1,4 +1,4 @@
-""" The grammar of low-level values in the GD file format """
+"""The grammar of low-level values in the GD file format"""
 
 from pyparsing import (
     DelimitedList,

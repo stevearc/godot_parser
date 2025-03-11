@@ -4,7 +4,6 @@ from godot_parser import Color, ExtResource, NodePath, SubResource, Vector2, Vec
 
 
 class TestGDObjects(unittest.TestCase):
-
     """Tests for GD object wrappers"""
 
     def test_vector2(self):

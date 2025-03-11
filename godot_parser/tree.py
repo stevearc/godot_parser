@@ -1,4 +1,5 @@
-""" Helper API for working with the Godot scene tree structure """
+"""Helper API for working with the Godot scene tree structure"""
+
 from collections import OrderedDict
 from typing import Any, List, Optional, Union
 

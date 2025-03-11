@@ -10,7 +10,6 @@ from godot_parser import (
 
 
 class TestGDSections(unittest.TestCase):
-
     """Tests for GD file sections"""
 
     def test_header_dunder(self):

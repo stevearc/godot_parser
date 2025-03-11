@@ -5,7 +5,6 @@ from godot_parser import GDFile, GDObject, GDResource, GDResourceSection, GDScen
 
 
 class TestGDFile(unittest.TestCase):
-
     """Tests for GDFile"""
 
     def test_basic_scene(self):
