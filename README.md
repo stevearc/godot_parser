@@ -1,6 +1,6 @@
 # Godot Parser
 
-[![Build Status](https://travis-ci.com/stevearc/godot_parser.svg?branch=master)](https://travis-ci.com/github/stevearc/godot_parser)
+[![Build Status](https://github.com/stevearc/godot_parser/actions/workflows/tests.yml/badge.svg)](https://github.com/stevearc/godot_parser/actions)
 [![Coverage Status](https://coveralls.io/repos/github/stevearc/godot_parser/badge.svg?branch=master)](https://coveralls.io/github/stevearc/godot_parser?branch=master)
 [![Downloads](http://pepy.tech/badge/godot_parser)](https://pypi.org/pypi/godot_parser)
 
@@ -45,11 +45,13 @@ Let's look at creating that same Player scene with the low-level API:
 ```python
   from godot_parser import GDFile, ExtResource, GDSection, GDSectionHeader
 
-  scene = GDFile(
-      GDSection(GDSectionHeader("gd_scene", load_steps=2, format=2))
-  )
+  scene = GDFile(GDSection(GDSectionHeader("gd_scene", load_steps=2, format=2)))
   scene.add_section(
-      GDSection(GDSectionHeader("ext_resource", path="res://PlayerSprite.png", type="PackedScene", id=1))
+      GDSection(
+          GDSectionHeader(
+              "ext_resource", path="res://PlayerSprite.png", type="PackedScene", id=1
+          )
+      )
   )
   scene.add_section(
       GDSection(GDSectionHeader("node", name="Player", type="KinematicBody2D"))
@@ -57,7 +59,7 @@ Let's look at creating that same Player scene with the low-level API:
   scene.add_section(
       GDSection(
           GDSectionHeader("node", name="Sprite", type="Sprite", parent="."),
-          texture=ExtResource(1)
+          texture=ExtResource(1),
       )
   )
   scene.write("Player.tscn")
@@ -78,23 +80,26 @@ Find all scenes in your project with a "Sensor" node and change the
   import sys
   from godot_parser import load
 
+
   def main(project):
       for root, _dirs, files in os.walk(project):
           for file in files:
-              if os.path.splitext(file)[1] == '.tscn':
+              if os.path.splitext(file)[1] == ".tscn":
                   update_collision_layer(os.path.join(root, file))
+
 
   def update_collision_layer(filepath):
       scene = load(filepath)
       updated = False
       with scene.use_tree() as tree:
-          sensor = tree.get_node('Sensor')
+          sensor = tree.get_node("Sensor")
           if sensor is not None:
-              sensor['collision_layer'] = 5
+              sensor["collision_layer"] = 5
               updated = True
 
       if updated:
           scene.write(filepath)
+
 
   main(sys.argv[1])
 ```
