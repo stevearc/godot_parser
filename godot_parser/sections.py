@@ -12,10 +12,28 @@ __all__ = [
     "GDExtResourceSection",
     "GDSubResourceSection",
     "GDResourceSection",
+    "GDTypedArray"
 ]
 
 
 GD_SECTION_REGISTRY = {}
+
+
+class GDTypedArray(object):
+    def __init__(self, inner_type, inner_value):
+        self.inner_type = inner_type
+        self.inner_value = inner_value
+
+    def __repr__(self) -> str:
+        return f"TypedArray({self.__str__()})"
+
+    def __str__(self) -> str:
+        return f"Array[{self.inner_type}]({self.inner_value})"
+
+    @classmethod
+    def from_parser(cls, parse_result):
+        inner_type, inner_value = parse_result
+        return cls(inner_type, inner_value)
 
 
 class GDSectionHeader(object):
