@@ -10,19 +10,19 @@ def stringify_object(value):
     if value is None:
         return "null"
     elif isinstance(value, str):
-        return json.dumps(value)
+        return json.dumps(value, ensure_ascii=False)
     elif isinstance(value, bool):
         return "true" if value else "false"
     elif isinstance(value, dict):
         return (
             "{\n"
             + ",\n".join(
-                ['"%s": %s' % (k, stringify_object(v)) for k, v in value.items()]
+                ['%s: %s' % (json.dumps(k, ensure_ascii=False) if isinstance(k, str) else str(k), stringify_object(v)) for k, v in value.items()]
             )
             + "\n}"
         )
     elif isinstance(value, list):
-        return "[ " + ", ".join([stringify_object(v) for v in value]) + " ]"
+        return "[" + ", ".join([stringify_object(v) for v in value]) + "]"
     else:
         return str(value)
 
