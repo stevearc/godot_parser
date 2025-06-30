@@ -1,12 +1,14 @@
 """Wrappers for Godot's non-primitive object types"""
 
 from functools import partial
-from typing import Type, TypeVar
+from typing import Any, Type, TypeVar
 
 from .util import stringify_object
 
 __all__ = [
+    "StringName",
     "GDObject",
+    "GDArray",
     "Vector2",
     "Vector3",
     "Color",
@@ -16,6 +18,25 @@ __all__ = [
 ]
 
 GD_OBJECT_REGISTRY = {}
+
+class StringName(object):
+    
+    def __init__(self, value: str):
+        self.value = value
+
+    def __str__(self) -> str:
+        return "&" + stringify_object(self.value)
+    
+    def __eq__(self, value):
+        if isinstance(value, StringName):
+            return self.value == value.value
+        return self.value == value
+
+    def __ne__(self, value):
+        return not self.__eq__(value)
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class GDObjectMeta(type):
@@ -55,7 +76,7 @@ class GDObject(metaclass=GDObjectMeta):
         return factory(*parse_result[1:])
 
     def __str__(self) -> str:
-        return "%s( %s )" % (
+        return "%s(%s)" % (
             self.name,
             ", ".join([stringify_object(v) for v in self.args]),
         )
@@ -67,6 +88,38 @@ class GDObject(metaclass=GDObjectMeta):
         if not isinstance(other, GDObject):
             return False
         return self.name == other.name and self.args == other.args
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+
+
+class GDArray:
+
+    def __init__(self, type=None, items: list[Any]=[]):
+        self.type = type
+        self.args = items
+    
+    @classmethod
+    def from_parser(cls, parse_result) -> "GDArray":
+        type = parse_result[0]
+        return GDArray(type, parse_result[1])
+    
+    def __str__(self):
+        return "Array[%s](%s)" % (
+            self.type,
+            stringify_object(self.args),
+        )
+
+    def __getitem__(self, idx: int):
+        return self.args[idx]
+
+    def __setitem__(self, idx: int, value):
+        self.args[idx] = value
+    
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, GDArray):
+            return False
+        return self.type == other.type and self.args == other.args
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)

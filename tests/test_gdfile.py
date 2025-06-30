@@ -27,9 +27,9 @@ class TestGDFile(unittest.TestCase):
             """[gd_resource load_steps=1 format=2]
 
 [resource]
-list = [ 1, 2.0, "string" ]
+list = [1, 2.0, "string"]
 map = {
-"key": [ "nested", Vector2( 1, 1 ) ]
+"key": ["nested", Vector2(1, 1)]
 }
 empty = null
 escaped = "foo(\\"bar\\")"

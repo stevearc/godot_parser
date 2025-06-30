@@ -3,7 +3,7 @@ import unittest
 
 from pyparsing import ParseException
 
-from godot_parser import GDFile, GDObject, GDSection, GDSectionHeader, Vector2, parse
+from godot_parser import StringName, GDFile, GDObject, GDArray, GDSection, GDSubResourceSection, GDSectionHeader, Vector2, parse
 
 HERE = os.path.dirname(__file__)
 
@@ -106,6 +106,40 @@ TEST_CASES = [
                     "0:0/0": 0,
                     "0:0/0/physics_layer_0/linear_velocity": Vector2(0, 0),
                     "0:0/0/physics_layer_0/angular_velocity": 0.0,
+                }
+            )
+        ),
+    ),
+    (
+        """[sub_resource type="Compositor" id="3"]
+    compositor_effects = Array[CompositorEffect]([ExtResource("1")])
+    """,
+        GDFile(
+            GDSection(
+                GDSectionHeader("sub_resource", type="Compositor", id="3"),
+                compositor_effects=GDArray(
+                    "CompositorEffect",
+                    [GDObject("ExtResource", "1")],
+                )
+            )
+        ),
+    ),
+    (
+        """[sub_resource type="AnimationLibrary" id="1"]
+    _data = {
+    &"RESET": SubResource("2"),
+    &"sprint": SubResource("3"),
+    &"walk": SubResource("4")
+    }""",
+        GDFile(
+            GDSection(
+                GDSectionHeader("sub_resource", type="AnimationLibrary", id="1"),
+                **{
+                    "_data": {
+                        StringName("RESET"): GDObject("SubResource", "2"),
+                        StringName("sprint"): GDObject("SubResource", "3"),
+                        StringName("walk"): GDObject("SubResource", "4"),
+                    }
                 }
             )
         ),
