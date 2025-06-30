@@ -10,7 +10,7 @@ def stringify_object(value):
     if value is None:
         return "null"
     elif isinstance(value, str):
-        return json.dumps(value)
+        return json.dumps(value, ensure_ascii=False)
     elif isinstance(value, bool):
         return "true" if value else "false"
     elif isinstance(value, dict):
