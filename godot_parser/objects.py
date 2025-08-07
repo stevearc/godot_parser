@@ -55,7 +55,7 @@ class GDObject(metaclass=GDObjectMeta):
         return factory(*parse_result[1:])
 
     def __str__(self) -> str:
-        return "%s( %s )" % (
+        return "%s(%s)" % (
             self.name,
             ", ".join([stringify_object(v) for v in self.args]),
         )

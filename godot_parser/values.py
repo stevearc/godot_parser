@@ -5,7 +5,9 @@ from pyparsing import (
     Forward,
     Group,
     Keyword,
+    Literal,
     Opt,
+    Optional,
     QuotedString,
     Suppress,
     Word,
@@ -15,6 +17,7 @@ from pyparsing import (
 )
 
 from .objects import GDObject
+from .sections import GDTypedArray
 
 boolean = (
     (Keyword("true") | Keyword("false"))
@@ -31,10 +34,11 @@ primitive = (
 value = Forward()
 
 # Vector2( 1, 2 )
+# May not have args: PackedStringArray()
 obj_type = (
     Word(alphas, alphanums).set_results_name("object_name")
     + Suppress("(")
-    + DelimitedList(value)
+    + Opt(DelimitedList(value))
     + Suppress(")")
 ).set_parse_action(GDObject.from_parser)
 
@@ -44,7 +48,6 @@ list_ = (
         Suppress("[") + Opt(DelimitedList(value)) + Opt(Suppress(",")) + Suppress("]")
     )
     .set_name("list")
-    .set_parse_action(lambda p: p.as_list())
 )
 key_val = Group(QuotedString('"', escChar="\\") + Suppress(":") + value)
 
@@ -57,6 +60,19 @@ dict_ = (
     .set_parse_action(lambda d: {k: v for k, v in d})
 )
 
+# Typed arrays: e.g. Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3, 4, 5)])
+# Need to support, e.g.:
+# polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(3, 2, 4, 5)])
+typed_array = (
+    Literal("Array").suppress() +
+    Suppress("[") +
+    Word(alphanums + "_").set_results_name("inner_type") +
+    Suppress("]") +
+    Suppress("(") +
+    list_.set_results_name("inner_value") +
+    Suppress(")")
+).set_name("typed_array").set_parse_action(GDTypedArray.from_parser)
+
 # Exports
 
-value <<= primitive | list_ | dict_ | obj_type
+value <<= primitive | list_ | dict_ | obj_type | typed_array
