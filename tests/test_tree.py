@@ -124,8 +124,7 @@ class TestInheritedScenes(unittest.TestCase):
         cls.root_scene = os.path.join(cls.project_dir, "Root.tscn")
         cls.mid_scene = os.path.join(cls.project_dir, "Mid.tscn")
         cls.leaf_scene = os.path.join(cls.project_dir, "Leaf.tscn")
-        scene = GDScene.parse(
-            """
+        scene = GDScene.parse("""
 [gd_scene load_steps=1 format=2]
 [node name="Root" type="KinematicBody2D"]
 collision_layer = 3
@@ -135,24 +134,20 @@ disabled = true
 flip_h = false
 [node name="Health" type="Control" parent="."]
 [node name="LifeBar" type="TextureProgress" parent="Health"]
-"""
-        )
+""")
         scene.write(cls.root_scene)
 
-        scene = GDScene.parse(
-            """
+        scene = GDScene.parse("""
 [gd_scene load_steps=2 format=2]
 [ext_resource path="res://Root.tscn" type="PackedScene" id=1]
 [node name="Mid" instance=ExtResource( 1 )]
 collision_layer = 4
 [node name="Health" parent="." index="2"]
 pause_mode = 2
-"""
-        )
+""")
         scene.write(cls.mid_scene)
 
-        scene = GDScene.parse(
-            """
+        scene = GDScene.parse("""
 [gd_scene load_steps=2 format=2]
 [ext_resource path="res://Mid.tscn" type="PackedScene" id=1]
 [sub_resource type="CircleShape2D" id=1]
@@ -160,8 +155,7 @@ pause_mode = 2
 shape = SubResource( 1 )
 [node name="Sprite" type="Sprite" parent="." index="1"]
 flip_h = true
-"""
-        )
+""")
         scene.write(cls.leaf_scene)
 
     @classmethod

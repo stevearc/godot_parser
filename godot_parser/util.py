@@ -19,7 +19,10 @@ def stringify_object(value):
         return (
             "{\n"
             + ",\n".join(
-                ['%s: %s' % (stringify_object(k), stringify_object(v)) for k, v in value.items()]
+                [
+                    "%s: %s" % (stringify_object(k), stringify_object(v))
+                    for k, v in value.items()
+                ]
             )
             + "\n}"
         )

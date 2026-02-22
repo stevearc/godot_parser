@@ -1,6 +1,17 @@
 import unittest
 
-from godot_parser import Color, ExtResource, NodePath, SubResource, Vector2, Vector3, StringName, GDObject, TypedDictionary, TypedArray
+from godot_parser import (
+    Color,
+    ExtResource,
+    GDObject,
+    NodePath,
+    StringName,
+    SubResource,
+    TypedArray,
+    TypedDictionary,
+    Vector2,
+    Vector3,
+)
 
 
 class TestGDObjects(unittest.TestCase):
@@ -112,24 +123,25 @@ class TestGDObjects(unittest.TestCase):
     def test_string_name(self):
         """Test for StringName"""
         s = StringName("test")
-        self.assertEqual(repr(s), "&\"test\"")
+        self.assertEqual(repr(s), '&"test"')
         s2 = StringName("test")
         self.assertEqual(s, s2)
         s2.str = "bad"
         self.assertNotEqual(s, s2)
 
-        s = StringName("A \"Quoted test\"")
-        self.assertEqual(repr(s), "&\"A \\\"Quoted test\\\"\"")
+        s = StringName('A "Quoted test"')
+        self.assertEqual(repr(s), '&"A \\"Quoted test\\""')
 
     def test_typed_dictionary(self):
         """Test for TypedDictionary"""
-        dict1 = {
-            StringName("asd"): GDObject("ExtResource", "2_qwert")
-        }
+        dict1 = {StringName("asd"): GDObject("ExtResource", "2_qwert")}
         td = TypedDictionary("StringName", GDObject("ExtResource", "1_qwert"), dict1)
-        self.assertEqual(repr(td), """Dictionary[StringName, ExtResource("1_qwert")]({
+        self.assertEqual(
+            repr(td),
+            """Dictionary[StringName, ExtResource("1_qwert")]({
 &"asd": ExtResource("2_qwert")
-})""")
+})""",
+        )
 
     def test_typed_array(self):
         """Test for TypedArray"""
@@ -140,9 +152,9 @@ class TestGDObjects(unittest.TestCase):
         ta = TypedArray("StringName", list1)
         self.assertEqual(repr(ta), """Array[StringName]([&"asd", &"dsa"])""")
 
-        list2 = [
-            GDObject("ExtResource", "1_qwert"),
-            GDObject("ExtResource", "2_testt")
-        ]
+        list2 = [GDObject("ExtResource", "1_qwert"), GDObject("ExtResource", "2_testt")]
         ta = TypedArray("StringName", list2)
-        self.assertEqual(repr(ta), """Array[StringName]([ExtResource("1_qwert"), ExtResource("2_testt")])""")
+        self.assertEqual(
+            repr(ta),
+            """Array[StringName]([ExtResource("1_qwert"), ExtResource("2_testt")])""",
+        )

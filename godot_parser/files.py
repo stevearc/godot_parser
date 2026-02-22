@@ -38,7 +38,6 @@ SCENE_ORDER = [
     "editable",
 ]
 
-
 GDFileType = TypeVar("GDFileType", bound="GDFile")
 
 
@@ -304,7 +303,9 @@ class GDFile(object):
     @classmethod
     def parse(cls: Type[GDFileType], contents: str) -> GDFileType:
         """Parse the contents of a Godot file"""
-        return cls.from_parser(scene_file.parse_with_tabs().parse_string(contents, parse_all=True))
+        return cls.from_parser(
+            scene_file.parse_with_tabs().parse_string(contents, parse_all=True)
+        )
 
     @classmethod
     def load(cls: Type[GDFileType], filepath: str) -> GDFileType:
